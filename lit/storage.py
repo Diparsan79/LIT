@@ -1,0 +1,81 @@
+import json
+import uuid
+from datetime import datetime, date
+from pathlib import Path
+
+#path setup
+DATA_DIR = Path(__file__).parent.parent / "data"
+ENTRIES_FILE= DATA_DIR / "entries.json"
+
+# storage functions
+
+def ensure_data_dir():
+    DATA_DIR.mkdir(exist_ok=True)
+
+def load_entries():
+    if not ENTRIES_FILE.exists():
+        return []
+    
+    with open(ENTRIES_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+    
+def save_entries(entries):
+    with open(ENTRIES_FILE, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2, ensure_ascii=False)
+
+#creating entry setup
+
+def create_entry(title, director="", year=None, rating=None, revie="", watched_data=None, tags=None):
+    entries= load_entries()
+
+    new_entry= {
+        "id": str(uuid.uuid4())[:8],
+        "title": title.strip(),
+        "director": director.strip(),
+        "year": year,
+        "rating": rating,
+        "review": review.strip(),
+        "year": year,
+        "rating": rating,
+        "review": review.strip(),
+        "watched_date": watched_date or date.today().isoformat(),
+        "created_at": datetime.now().isoformat(),
+        "tags": tags or []
+    }
+    entries.append(new_entry)
+    save_entries(entries)
+
+    return new_entry
+
+def get_all_entries():
+    entries= load_entries()
+    return sorted(entries, key=lambda e: e["watched_date"], reverse=True)
+
+def get_entry_by_id(entry_id):
+    entries= load_entries()
+    for entry in entries:
+        if entry["id"] == entry_id:
+            return entry
+    return None
+
+def delete_entry(entry_id):
+    entries = load_entries()
+    original_count = len(entries)
+    entries =[e for e in entries if e["id"] != entry_id]
+
+    if len(entries) ==original_count:
+        return False
+    save_entries(entries)
+    return True
+
+def update_entry(entry_id, **kwargs):
+# im using kwargs to make partial updates so that user doesnt have to update each value every time
+    entries = load_entries()
+    for entry in entries:
+        for field,value in kwargs.items():
+
+            if field in entry:
+                entry[field]= value
+        save_entries(entries)
+        return entry
+    return None
