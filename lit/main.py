@@ -4,6 +4,8 @@ from rich.text import Text
 from rich.align import Align
 from rich.console import Group
 import readchar
+from . import screens
+from . import storage
 
 console = Console()
 
@@ -101,7 +103,10 @@ def main():
 
             handle_menu_input(key)
         elif APP_STATE["screen"] =="log":
-            show_placeholder("log a film")
+            next_screen = screens.show_log_screen()
+            APP_STATE["screen"]= next_screen
+            print(repr(APP_STATE["screen"]))
+            input("DEBUG: press enter to continue")
         elif APP_STATE["screen"] =="diary":
             show_placeholder("diary")
         elif APP_STATE["screen"]== "watchlist":
