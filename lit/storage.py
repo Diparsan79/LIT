@@ -15,9 +15,10 @@ def ensure_data_dir():
 def load_entries():
     if not ENTRIES_FILE.exists():
         return []
-    
-    with open(ENTRIES_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    content = ENTRIES_FILE.read_text(encoding="utf-8").strip()
+    if not content:
+        return[]
+    return json.loads(content)
     
 def save_entries(entries):
     with open(ENTRIES_FILE, "w", encoding="utf-8") as f:
@@ -25,7 +26,7 @@ def save_entries(entries):
 
 #creating entry setup
 
-def create_entry(title, director="", year=None, rating=None, revie="", watched_data=None, tags=None):
+def create_entry(title, director="", year=None, rating=None, review="", watched_date=None, tags=None):
     entries= load_entries()
 
     new_entry= {
