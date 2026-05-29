@@ -105,10 +105,9 @@ def main():
         elif APP_STATE["screen"] =="log":
             next_screen = screens.show_log_screen()
             APP_STATE["screen"]= next_screen
-            print(repr(APP_STATE["screen"]))
-            input("DEBUG: press enter to continue")
         elif APP_STATE["screen"] =="diary":
-            show_placeholder("diary")
+            next_screen = screens.show_diary_screen()
+            APP_STATE["screen"] = next_screen
         elif APP_STATE["screen"]== "watchlist":
             show_placeholder("watchlist")
         elif APP_STATE["screen"] =="search":

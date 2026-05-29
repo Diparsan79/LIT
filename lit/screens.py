@@ -126,3 +126,89 @@ def show_log_screen():
         readchar.readkey()
 
     return "menu"
+
+def render_stars(rating):
+
+    if rating is None:
+        return "[dim]------------[/dim]"
+    
+    filled = "*" * rating
+    empty = "O" (10-rating)
+    return f"[yellow]{filled}[/yellow][dim]{empty}[/dim]"
+
+def format_date(iso_date_string):
+    try:
+        from datetime import datetime
+        d = datetime.strptime(iso_date_string, "%Y-%m-%d")
+        return d.strftime(" %d %b %Y")
+    except Exception:
+        return iso_date_string
+    
+def render_entry_row(index, entry):
+    row = Text()
+
+    row.append(f"{index:02d} ", style="dim white")
+
+    title = entry.get("title", "unknown")
+    row.append(f"{title:<38}", style="bold white")
+
+    rating = entry.get("rating")
+    if rating:
+        filled = "*" * rating
+        empty = "O" * (10 - rating)
+        row.append(filled, style = "yellow")
+        row.append(empty, style="dim white")
+    else:
+        row.append("-----------", style = "dim white")
+
+    date_str = format_date(entry.get("watched_date", " "))
+    row.append(f"    {date_str}", style="dim white")
+
+    director = entry.get("director", "")
+    year = entry.get("year")
+
+    meta_parts = [p for p in [director , str(year) if year else ""]if p]
+    meta = "  ·  ".join(meta_parts) if meta_parts else ""
+
+    if meta:
+        row.append(f"\n     [dim] {meta} [/dim]")
+        return row
+
+# diary screen
+def show_diary_screen():
+    clear_and_header("diary")
+    entries = storage.get_all_entries()
+
+    if not entries:
+        console.print()
+        console.print("  [dim]No films logged yet.[/dim]")
+        console.print()
+        console.print(" [dim] Press [/dim][bold red]L[/bold red][dim] from the menu to log your first film. [/dim]")
+        console.print()
+        console.print(" [dim]press any key to go back[/dim]")
+        readchar.readkey()
+        return "menu"
+    
+    console.print()
+    console.print(f" [dim] {len(entries)} film{'s' if len(entries) != 1 else ''} logged[/dim]")
+    console.print()
+
+    for i, entry in enumerate(entries, start=1):
+        row = render_entry_row(i,entry)
+        console.print(row)
+        console.print()
+
+    console.print(Rule(style="dim red"))
+    console.print(" [dim] press [/dim] [bold red]Q[/bold red][dim] to go back[/dim]")
+    console.print()
+
+    while True:
+        key = readchar.readkey().lower()
+
+        if key =="q":
+            return "menu"
+        
+        if key.isdigit():
+            index = int(key)
+            if 1 <= index <= len(entries):
+                return "menu"
