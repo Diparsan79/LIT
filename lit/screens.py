@@ -187,7 +187,7 @@ def show_diary_screen():
         console.print()
         console.print(" [dim]press any key to go back[/dim]")
         readchar.readkey()
-        return "menu"
+        return "menu", None
     
     console.print()
     console.print(f" [dim] {len(entries)} film{'s' if len(entries) != 1 else ''} logged[/dim]")
@@ -206,9 +206,76 @@ def show_diary_screen():
         key = readchar.readkey().lower()
 
         if key =="q":
-            return "menu"
+            return "menu", None
         
         if key.isdigit():
             index = int(key)
             if 1 <= index <= len(entries):
-                return "menu"
+                entry = entries[index -1]
+                return "detail", entry
+            
+def show_detail_screen(entry):
+    if not entry:
+        return "menu"
+    clear_and_header("entry detail")
+    console.print()
+
+    title_text = Text()
+    title_text.append(entry.get("title", "Unknown"), style="bold white")
+    console.print(f"  ", end = "")
+    console.print(title_text)
+
+    director = entry.get("director", "")
+    year = entry.get("year")
+    meta_parts = [p for p in [director, str(year), str(year) if year else ""]if p]
+    meta = "  ·  ".join(meta_parts) if meta_parts else ""
+    if meta:
+        console.print(f" [dim] {meta}[/dim]")
+
+    console.print()
+
+    rating = entry.get("rating")
+    if rating:
+        filled = "*" * rating
+        empty = "O" * (10 - rating)
+        console.print(f" [yellow] {filled}[/yellow][dim white] {empty}[/dim white] [dim] {rating}/10[/dim]")
+    else:
+        console.print(" [dim]no rating[/dim]")
+    
+    console.print()
+    console.print(Rule(style="dim red"))
+    console.print()
+
+    review = entry.get("review", "").strip()
+    if review:
+        console.print(" [dim red]review [/dim red]")
+        console.print()
+        console.print(f" [white]{review}[/white]")
+    else:
+        console.print(" [dim]no review written.[/dim]")
+
+    console.print()
+    console.print(Rule(style="dim red"))
+    console.print()
+
+
+    watched = format_date(entry.get("watched_date", ""))
+    created = entry.get("created_at", "")[:10]
+    entry_id = entry.get("id", "")
+    console.print(f" [dim] watched {watched}[/dim]")
+    console.print(f" [dim]logged {created}[/dim]")
+    console.print(f" [dim] id{entry_id}[/dim]")
+
+    console.print()
+    console.print(Rule(style="dim red"))
+    console.print()
+
+# some random ahh actions
+
+    console.print(" [bold red][Q][/bold red][dim] back to diary[/dim]")
+    console.print()
+
+    while True:
+        key = readchar.readkey().lower()
+        if key =="q":
+            return "diary"

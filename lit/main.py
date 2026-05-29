@@ -12,6 +12,7 @@ console = Console()
 APP_STATE = {
     "running": True,
     "screen": "menu",
+    "selected_entry": None
 }
 
 
@@ -100,16 +101,25 @@ def main():
         if APP_STATE["screen"]== "menu":
             show_main_menu()
             key = readchar.readkey()
-
             handle_menu_input(key)
+
         elif APP_STATE["screen"] =="log":
             next_screen = screens.show_log_screen()
             APP_STATE["screen"]= next_screen
+
         elif APP_STATE["screen"] =="diary":
-            next_screen = screens.show_diary_screen()
+            next_screen, entry = screens.show_diary_screen()
             APP_STATE["screen"] = next_screen
+            APP_STATE["selected_entry"] = entry
+
+        elif APP_STATE["screen"] == "detail":
+            next_screen = screens.show_detail_screen(APP_STATE["selected_entry"])
+            APP_STATE["screen"] = next_screen
+            APP_STATE["selected_entry"]= None
+
         elif APP_STATE["screen"]== "watchlist":
             show_placeholder("watchlist")
+
         elif APP_STATE["screen"] =="search":
             show_placeholder("search")
     
@@ -118,3 +128,5 @@ def main():
 
 if __name__ =="__main__":
     main()
+
+
