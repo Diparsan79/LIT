@@ -271,11 +271,128 @@ def show_detail_screen(entry):
     console.print()
 
 # some random ahh actions
-
+    console.print(" [bold red][E][/bold red][dim] edit[/dim]")
+    console.print(" [bold red][D][/bold red] [dim] delete[/dim]")
     console.print(" [bold red][Q][/bold red][dim] back to diary[/dim]")
     console.print()
 
     while True:
         key = readchar.readkey().lower()
+
         if key =="q":
             return "diary"
+        elif key == "d":
+            console.print()
+            console.print(f" [dim]delete'[/dim][white] {entry.get('title')}[/white][dim]'? (y/n)[/dim]")
+            confirm = readchar.readkey().lower()
+
+            if confirm == "y":
+                storage.delete_entry(entry["id"])
+                console.print()
+                console.print(" [bold red] ✓ [/bold red] [dim]entry deleted.[/dim]")
+                console.print()
+                console.print(" [dim] press any key to return to diary[/dim]")
+                readchar.readkey()
+                return "diary"
+            else:
+                console.print(" [dim]cancelled.[/dim]")
+                console.print()
+
+        elif key == "e":
+            return show_edit_screen(entry)
+        
+
+#edit screen
+def show_edit_screen(entry):
+    clear_and_header("edit entry")
+
+    console.print()
+    console.print(" [dim] Press Enter to keep the current value. Type to replace it.[/dim]")
+    console.print()
+
+    def edit_prompt(label, current):
+        console.print(f" [bold red]›[/bold red]{label}")
+        console.print(f" [dim]current: {current if current else '-'}[/dim]")
+        new_value = input("    new: ").strip()
+        console.print()
+
+        return new_value if new_value else current
+
+    new_title = edit_prompt("Title", entry.get("Title"))
+    new_director = edit_prompt("Director", entry.get("director", ""))
+
+
+    #some validation
+    while True:
+        console.print(f" [bold red]›[/bold red] Year")
+        console.print(f"     [dim]current: {entry.get('year') or '-'}[/dim]")
+        new_year_raw = input("     new: ").strip()
+        console.print()
+
+        if new_year_raw == "":
+            new_year = entry.get("year")
+            break
+        if new_year_raw.isdigit():
+            y = int(new_year_raw)
+            if 1888<= y <= 2030:
+                new_year = y
+                break
+        console.print("  [dim red] Invalid year. Try again.[/dim red]")
+        console.print()
+
+    while True:
+        console.print(f"   [bold red]›[/bold red] Rating (1-10)")
+        console.print(f"   [dim]current: {entry.get('rating')or '-'}[/dim]")
+        new_rating_raw = input("     new: ").strip()
+        console.print()
+
+        if new_rating_raw =="":
+            new_rating = entry.get("rating")
+            break
+        if new_rating_raw.isdigit():
+            r = int(new_rating_raw)
+            if 1 <= r <= 10:
+                new_rating = r
+                break
+
+        console.print(" [dim red] Please enter 1-10.[/dim red]")
+        console.print()
+    
+    new_review = edit_prompt("Review", entry.get("review", ""))
+
+#confirmation
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print(" [bold white] Save changes[/bold white]")
+    console.print()
+
+    fields = [
+        ("Title", new_title),
+        ("Director", new_director or "-"),
+        ("Year", str(new_year) if new_year else "-"),
+        ("Rating", f"{new_rating}/10" if new_rating else "-"),
+        ("Review", new_review or "-")
+    ]
+    for label , value in fields:
+        console.print(f" [dim]{label:<12}[/dim][white]{value}[/white]")
+
+    console.print()
+    console.print(" [bold red]>[/bold red] Confirm[dim](y/n)[/dim]")
+    confirm = readchar.readkey().lower()
+
+    if confirm =="y":
+        storage.update_entry(
+            entry["id"],
+            title = new_title,
+            director = new_director,
+            year = new_year,
+            rating = new_rating,
+            review = new_review
+        )
+        console.print()
+        console.print(" [bold red]✓[/bold red] [dim]changes saved.[/dim]")
+        console.print()
+        console.print("  [dim]press any key to return to diary[/dim]")
+        readchar.readkey()
+
+    return "diary"
