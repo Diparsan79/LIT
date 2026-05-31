@@ -396,3 +396,105 @@ def show_edit_screen(entry):
         readchar.readkey()
 
     return "diary"
+
+#stats screen
+
+def show_stats_screen():
+    from collections import Counter
+
+    clear_and_header("stats")
+
+    entries = storage.get_all_entries()
+
+    if not entries:
+        console.print()
+        console.print(" [dim]No films logged yet. Nothing to compute.[/dim]")
+        console.print()
+        console.print(" [dim] press any key to go back[/dim]")
+        readchar.readkey()
+        return "menu"
+    
+
+# some deets computing
+    total = len(entries)
+    rated = [e for e in entries if e.get("rating") is not None]
+    avg_rating = round(sum(e["rating"] for e in rated)/ len(rated), 1) if rated else None
+
+    top_entry = max(rated, key=lambda e: e["rating"]) if rated else None
+    low_entry = min(rated, key=lambda e: e["rating"]) if rated else None
+
+    directors = [e["director"] for e in entries if e.get("director", "").strip()]
+    fav_director = Counter(directors).most_common(1)[0] if directors else None
+
+
+    months = []
+    for e in entries:
+        try:
+            from datetime import datetime
+            d = datetime.strptime(e["watched_date"], "%Y-%m-%d")
+            months.append(d.strftime("%B %Y"))
+        
+        except Exception:
+            pass
+
+    top_month = Counter(months).most_common(1)[0] if months else None
+
+    rating_counts = Counter(e["rating"] for e in rated)
+
+
+    console.print()
+
+    console.print(f" [bold red]›[/bold red] [white]Total logged[/white] [yellow]{total}[/yellow] film{'s' if total != 1 else ''}")
+    console.print()
+
+    if avg_rating:
+        console.print(f"  [bold red]›[/bold red] [white]Highest rated[/white] [yellow]{avg_rating}[/yellow]/10")
+        console.print()
+    
+    if top_entry:
+        console.print(f" [bold red]›[/bold red] [white]Highest rated[/white] {top_entry['title']} [dim]({top_entry['rating']}/10[/dim])")
+        console.print()
+
+    if low_entry and low_entry["id"] != top_entry["id"]:
+        console.print(f" [bold red]›[/bold red] [white]Lowest rated[/white] {low_entry['title']} [dim]({low_entry['rating']}/10[/dim])")
+        console.print()
+
+    if fav_director:
+        name, count = fav_director
+        console.print(f" [bold red]›[/bold red] [white]Top director[/white] {name} [dim]{count} film{'s' if count != 1 else ''}[/dim]")
+        console.print()
+
+    if rating_counts:
+        console.print(Rule(style="dim red"))
+        console.print()
+        console.print(" [dim]rating distribution[/dim]")
+        console.print()
+
+        max_count = max(rating_counts.values())
+
+        for star in range(1,11):
+            count = rating_counts.get(star,0)
+
+            bar_length = int( (count / max_count)* 20) if max_count > 0 else 0
+            filled = "█" * bar_length
+            empty = "░" * (20 - bar_length)
+
+
+            if count > 0:
+                console.print(
+                    f" [dim] {star:>2}[/dim]"
+                    f"[yellow] {filled}[/yellow][dim]{empty}[/dim] "
+                    f"[dim]{count}[/dim]"
+                )
+            else:
+                console.print(
+                f"  [dim]{star:>2}  {filled}{empty}  {count}[/dim]"
+                )
+
+        console.print()
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print(" [dim]press any key to go back[/dim]")
+    readchar.readkey()
+    return "menu"
+

@@ -34,7 +34,7 @@ def render_menu():
         ("L", "log a film"),
         ("D", "diary"),
         ("w", "watchlist"),
-        ("S", "search"),
+        ("S", "stats"),
         ("Q", "quit"),
     ]
 
@@ -90,7 +90,7 @@ def handle_menu_input(key):
     elif key=="w":
         APP_STATE["screen"]="watchlist"
     elif key=="s":
-        APP_STATE["screen"]="search"
+        APP_STATE["screen"]="stats"
     elif key =="q":
         APP_STATE["running"]= False
 
@@ -120,13 +120,12 @@ def main():
         elif APP_STATE["screen"]== "watchlist":
             show_placeholder("watchlist")
 
-        elif APP_STATE["screen"] =="search":
-            show_placeholder("search")
+        elif APP_STATE["screen"] =="stats":
+            next_screen = screens.show_stats_screen()
+            APP_STATE["screen"] = next_screen
     
     console.clear()
     console.print("\n[dim red] goodbye ,  beloved cinephile. [/dim red]")
 
 if __name__ =="__main__":
     main()
-
-
