@@ -6,6 +6,7 @@ from pathlib import Path
 #path setup
 DATA_DIR = Path(__file__).parent.parent / "data"
 ENTRIES_FILE= DATA_DIR / "entries.json"
+WATCHLIST_FILE = DATA_DIR / "watchlist.json"
 
 # storage functions
 
@@ -80,3 +81,34 @@ def update_entry(entry_id, **kwargs):
         save_entries(entries)
         return entry
     return None
+
+
+def load_watchlist():
+    if not WATCHLIST_FILE.exists():
+        return []
+    content = WATCHLIST_FILE.read_text(encoding = "utf-8").strip()
+    if not content:
+        return []
+    return json.loads(content)
+
+def save_watchlist(items):
+    ensure_data_dir()
+    with open(WATCHLIST_FILE, "w", encoding = "utf-8") as f:
+        json.dump(items,f, indent = 2, ensure_ascii = False)
+
+def add_to_watchlist(title, director="", year = None, note = ""):
+
+    items = load_watchlist()
+
+    new_item = {
+        "id":  str(uuid.uuid())[:8],
+        "title": title.strip(),
+        "director": director.strip(),
+        "year": year,
+        "note": note.strip(),
+        "added_note": date.today().isoformat()
+    }
+    items.append(new_item)
+    save_watchlist(items)
+    return new_item
+
