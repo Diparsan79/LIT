@@ -112,3 +112,42 @@ def add_to_watchlist(title, director="", year = None, note = ""):
     save_watchlist(items)
     return new_item
 
+def get_watchlist():
+    items = load_watchlist()
+    return sorted(items, key=lambda i: i["added_date"], reverse = True)
+
+def remove_from_watchlist(item_id):
+    items = load_watchlist
+    original_count = len(items)
+    items = [i for i in items if i["id"] != item_id]
+    if len(items) == original_count:
+        return False
+    save_watchlist(items)
+    return True
+
+def search_entries(query= "", min_rating = None, max_rating = None):
+    entries = get_all_entries()
+    results = []
+
+    query = query.lower().strip()
+
+    for entry in entries:
+        if query:
+            title = entry.get("title", "").lower()
+            director = entry.get("director", "").lower()
+            if query not in title and query not in director:
+                continue
+
+        rating = entry.get("rating")
+
+        if min_rating is not None:
+            if rating is None or rating < min_rating:
+                continue
+
+        if max_rating is not None:
+            if rating is None or rating > max_rating:
+                continue
+
+        results.append(entry)
+
+    return results

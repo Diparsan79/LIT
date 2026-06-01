@@ -56,7 +56,7 @@ def prompt_year():
         console.print(f" [dim red] Please enter a valid year (1888-{date.today().year}).[/dim red]")
         console.print()
 
-def show_log_screen():
+def show_log_screen(prefill_title=None):
     clear_and_header("log a film")
     console.print(" [dim]Fill in what you know. Press Enter to skip optional fields.[/dim]")
     console.print()
@@ -64,11 +64,19 @@ def show_log_screen():
 
 #lets collect some data
     while True:
-        title= prompt("Title")
-        if title:
+        if prefill_title:
+            console.print(f" [bold red]›[/bold red] Title[dim(pre-filled from watchlist)[/dim]]")
+            console.print(f"    [white]{prefill_title}[/white] ")
+            console.print("    [dim] press enter to keep, or type to change[/dim]")
+            override = input("   ").strip()
+            title = override if override else prefill_title
             break
-        console.print(" [dim red] Title is required.[/dim red]")
-        console.print()
+        else:
+            title= prompt("Title")
+            if title:
+                break
+            console.print(" [dim red] Title is required.[/dim red]")
+            console.print()
 
     director = prompt("Director", optional=True)
     year = prompt_year()
@@ -498,3 +506,172 @@ def show_stats_screen():
     readchar.readkey()
     return "menu"
 
+def show_watchlist_screen():
+
+    clear_and_header("watchlist")
+    items = storage.get_watchlist()
+
+    if not items:
+        console.print()
+        console.print(" [dim] Your watchlist is empty.[/dim]")
+        console.print()
+        console.print("  [bold red][A][/bold red][dim] add a film[/dim]")
+        console.print(" [bold red][Q][bold red][dim] back to menu[/dim]")
+        console.print()
+
+        while True:
+            key = readchar.readkey().lower()
+            if key == "q":
+                return "menu", None
+            elif key == "a":
+                show_add_to_watchlist()
+                return show_watchlist_screen()
+    console.print()
+    console.print(f"  [dim] {len(items)} film{'s' if len(items) != 1 else ''} to watch[/dim]")
+    console.print()
+
+    for i, item in enumerate(items, start = 1):
+        row = Text()
+        row.append(f"  {i:02d} ", style ="dim white")
+        row.append(f"{item['title']:<38}", style="bold white")
+
+        if item.get("year"):
+            row.append(f"{item['year']}", style ="dim white")
+
+        console.print(row)
+
+        meta_parts = []
+        if item.get("director"):
+            meta_parts.append(item["director"])
+        if item.get("note"):
+            meta_parts.append(f'" {item["note"]}"')
+        if meta_parts:
+            console.print(f"        [dim]{' · '.join(meta_parts)}[/dim]")
+
+        console.print()
+    
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print(" [bold red][A][/bold red][dim] add a film[/dim]")
+    console.print(" [bold red] [1-9][/bold red][dim] mark as watched[/dim]")
+    console.print(" [bold red] [R] [/bold red][dim] remove a film[/dim]")
+    console.print(" [bold red][Q][/bold red][dim] back to menu[/dim]")
+    console.print()
+
+    while True:
+        key = readchar.readkey().lower()
+
+        if key == "q":
+            return "menu", None
+        
+        elif  key == "a":
+            show_add_to_watchlist()
+            return show_watchlist_screen()
+        
+        elif key == "r":
+            show_add_to_watchlist(items)
+            return show_watchlist_screen()
+        
+        elif key.isdigit():
+            index = int(key)
+            if 1 <= index <= len(items):
+                item = item[index - 1]
+
+
+                console.print()
+                console.print(f"   [dim]mark '[/dim][white]{item['title']} [/white][dim]' as watched? (y/n)[/dim]")
+                confirm = readchar.readkey().lower()
+
+                if confirm == "y":
+
+                    storage.remove_from_watchlist(item["id"])
+                    console.print()
+                    console.print(f" [bold red]✓[/bold red] [dim] moved to log screen - fill in your thoughts.[/dim]")
+                    console.print()
+                    console.print(" [dim] press any key to continue[/dim]")
+                    readchar.readkey()
+
+                    return "log", item["title"]
+                
+
+def show_add_to_watchlist():
+
+    clear_and_header("add to watchlist")
+    console.print()
+    console.print(" [dim]Add a film you want to watch.[/dim]")
+    console.print()
+
+    while True:
+        title = prompt("Title")
+        if title:
+            break
+        console.print("   [dim red] Title is required.[/dim red]")
+        console.print()
+        console.print("   [dim] press any key to continue[/dim]")
+        readchar.readkey()
+
+
+def show_remove_from_watchlist(items):
+    console.print()
+    console.print(" [dim]Enter the number of the film to remove (or Q to cancel):[/dim]")
+    console.print()
+
+    while True:
+        key = readchar.readkey().lower()
+
+        if key == "q":
+            return
+        
+        if key.isdigit():
+            index = int(key)
+            if 1 <= index <= len(items):
+                item = items[index - 1]
+                console.print(f"  [dim] remove '[/dim][white]{item['title']} [/white][dim]'? (y/n)[/dim]")
+                confirm = readchar.readkey.lower()
+
+                if confirm =="y":
+                    storage.remove_from_watchlist(item["id"])
+                    console.print()
+                    console.print(f"  [bold red]✓[/bold red] [dim]removed.[/dim]")
+                    console.print()
+                    console.print("  [dim]press any key to continue[/dim]")
+                    readchar.readkey()
+                return
+            
+def show_search_screen():
+    clear_and_header("search")
+
+    console.print()
+    console.print(" [bold red]›[/bold red] Search title or director [dim](or press Enter to skip)[/dim]")
+    query = input("   ").strip()
+    console.print()
+
+
+    min_rating = None
+    console.print(" [bold red] ›[/bold red] Minimum rating [dim](1-10, or press Enter to skip)[/dim]")
+    min_raw = input("    ").strip()
+    console.print()
+    if min_raw.isdigit() and 1 <= int(min_raw) <= 10:
+        min_rating = int(min_raw)
+
+
+    if not query and min_rating is None:
+        results = storage.get_all_entries()
+
+    else:
+        results = storage.search_entries(query=query, min_rating=min_rating)
+
+    console.clear()
+    clear_and_header("search results")
+    console.print()
+
+    if query and min_rating:
+        console.print(f"  [dim]'{query}'  ·  rated {min_rating}+[/dim]")
+    elif query:
+        console.print(f"  [dim]'{query}'[/dim]")
+    elif min_rating:
+        console.print(f"  [dim]rated {min_rating} or above[/dim]")
+    else:
+        console.print(f"  [dim]all films[/dim]")
+
+    console.print()

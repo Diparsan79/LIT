@@ -12,7 +12,8 @@ console = Console()
 APP_STATE = {
     "running": True,
     "screen": "menu",
-    "selected_entry": None
+    "selected_entry": None,
+    "prefill_title": None
 }
 
 
@@ -118,7 +119,11 @@ def main():
             APP_STATE["selected_entry"]= None
 
         elif APP_STATE["screen"]== "watchlist":
-            show_placeholder("watchlist")
+            result = screens.show_watchlist_screen()
+
+            next_screen, prefill = result
+            APP_STATE["screen"] = next_screen
+            APP_STATE["prefill_title"] = prefill
 
         elif APP_STATE["screen"] =="stats":
             next_screen = screens.show_stats_screen()
