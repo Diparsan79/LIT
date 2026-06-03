@@ -86,6 +86,10 @@ def show_log_screen(prefill_title=None):
     console.print(" [dim] for a single line review just type and hit enter)[/dim]")
     review= input("       ").strip()
 
+    console.print(" [bold red]›[/bold red] Tags [dim](optional - comma separated, e.g. Surreal, horror[/dim])")
+    tags_raw = input("    ").strip()
+    console.input()
+    tags = [t.strip().lower() for t in tags_raw.split(",") if t.strip()]
 # confirming ig?
     console.print()
     console.print(Rule(style="dim red"))
@@ -98,7 +102,8 @@ def show_log_screen(prefill_title=None):
         ("Director", director or "-"),
         ("Year", str(year) if year else "-"),
         ("Rating", f"{rating}/10" if rating else "-"),
-        ("Review", review or "-")
+        ("Review", review or "-"),
+        ("Tags", ",".join(tags) if tags else "-")
     ]
 
     for label, value in fields:
@@ -118,7 +123,8 @@ def show_log_screen(prefill_title=None):
             director=director,
             year=year,
             rating=rating,
-            review=review
+            review=review,
+            tags=tags
         )
         console.print()
         console.print(f" [bold red] Done[/bold red] [white]'{entry['title']}' [/white] [dim]saved.[/dim]")
@@ -132,6 +138,23 @@ def show_log_screen(prefill_title=None):
         console.print()
         console.print(" [dim]press Enter to return to menu[/dim]")
         readchar.readkey()
+
+    previous_watches = storage.get_entries_by_title(title)
+
+    if previous_watches:
+        console.print()
+        count = len(previous_watches)
+        console.print(f"  [bold red]![/bold red] [white]You've logged this film {count} time{'s' if count != 1 else ''} before.[/white]")
+        console.print()
+
+        for i, prev in enumerate(previous_watches, start = 1):
+            rating_str = f"{prev['rating']}/10" if prev.get('rating') else "unrated"
+            date_str = format_date(prev.get("watched_date", ""))
+            console.print(f"    [dim]watch {i}   ·  {date_str}   ·  {rating_str}[/dim]")
+
+        console.print()
+        console.print("  [dim]Logging as a new watch. Your previous entries are kept.[/dim]")
+        console.print()
 
     return "menu"
 
@@ -242,6 +265,48 @@ def show_detail_screen(entry):
 
     console.print()
 
+    all_watches = storage.get_all_entries_by_title(entry.get("title", ""))
+
+    if len(all_watches) > 1:
+        console.print()
+        console.print(f"  [dim]watch hiustory  ·  {len(all_watches)} times[/dim]")
+        console.print()
+
+        for i, watch in enumerate(all_watches, start = 1):
+            is_current = watch["id"] == entry["id"]
+
+            rating_str = f"{watch['rating']}/10" if watch.get("rating") else "-"
+            date_str = format_date(watch.get("watched_date", ""))
+
+            if is_current:
+                console.print(
+                    f" [bold red]->[/bold red] "
+                    f"[white] watch {i}[/white]"
+                    f"[dim] {date_str}[/dim]"
+                    f"[yellow]{rating_str}[/yellow]"
+                    f"[dim](this entry)[/dim]"
+                )
+            else:
+                console.print(
+                    f"    [dim]watch {i}  ·  {date_str}  ·  {rating_str}[/dim] "
+                )
+        rated_watches = [w for w in all_watches if w.get("rating")]
+        if len(rated_watches) > 1:
+            first = rated_watches[0]["rating"]
+            last = rated_watches[-1]["rating"]
+            diff = last - first
+
+            if diff > 0:
+                arc = f"[green]+ {diff} since first watch[/green]"
+            elif diff < 0:
+                arc = f"[red]{diff} since first watch[/dim]"
+
+            console.print()
+            console.print(f"   {arc}")
+
+        console.print()
+        console.print(Rule(style="dim red"))
+
     rating = entry.get("rating")
     if rating:
         filled = "*" * rating
@@ -261,6 +326,17 @@ def show_detail_screen(entry):
         console.print(f" [white]{review}[/white]")
     else:
         console.print(" [dim]no review written.[/dim]")
+
+    tags = entry.get("tags", [])
+    if tags:
+        console.print()
+        tag_text = Text()
+        tag_text.append(" ")
+        for tag in tags:
+            tag_text.append(f" {tag}", style="bold red")
+            tag_text.append(" ", style = "")
+        console.print(tag_text)
+
 
     console.print()
     console.print(Rule(style="dim red"))
@@ -368,6 +444,15 @@ def show_edit_screen(entry):
     
     new_review = edit_prompt("Review", entry.get("review", ""))
 
+    current_tags = ",".join(entry.get("tags", []))
+    console.print(f" [bold red]›[/bold red] Tags [dim](comma separated)[/dim]")
+    tags_raw = input("  new: ").strip()
+    console.print()
+
+    if tags_raw:
+        new_tags = [t.strip().lower() for t in tags_raw.split(",") if t.strip()]
+    else:
+        new_tags = entry.get("tags", [])
 #confirmation
     console.print(Rule(style="dim red"))
     console.print()
@@ -395,7 +480,8 @@ def show_edit_screen(entry):
             director = new_director,
             year = new_year,
             rating = new_rating,
-            review = new_review
+            review = new_review,
+            tags = new_tags
         )
         console.print()
         console.print(" [bold red]✓[/bold red] [dim]changes saved.[/dim]")
@@ -447,6 +533,14 @@ def show_stats_screen():
 
     top_month = Counter(months).most_common(1)[0] if months else None
 
+#most rewatched
+    from collections import Counter
+    title_counts = Counter(
+        e.get("title", "").strip().lower()
+        for e in entries
+    )
+    rewatched = [(t,c) for t,c in title_counts.most_common() if c > 1]
+
     rating_counts = Counter(e["rating"] for e in rated)
 
 
@@ -470,6 +564,21 @@ def show_stats_screen():
     if fav_director:
         name, count = fav_director
         console.print(f" [bold red]›[/bold red] [white]Top director[/white] {name} [dim]{count} film{'s' if count != 1 else ''}[/dim]")
+        console.print()
+
+    if rewatched:
+        top_title_lower, top_count = rewatched[0]
+        display_title = next(
+            (e["title"] for e in entries
+            if e["title"].strip().lower() == top_title_lower),
+            top_title_lower
+        )
+        console.print(
+            f" [bold red]›[/bold red] "
+            f"[white]Most rewatched[/white] "
+            f"{display_title} "
+            f"[dim]({top_count} watches[/dim])"
+        )
         console.print()
 
     if rating_counts:
@@ -499,6 +608,23 @@ def show_stats_screen():
                 f"  [dim]{star:>2}  {filled}{empty}  {count}[/dim]"
                 )
 
+        console.print()
+    tag_counts = storage.get_all_tags()
+
+    if tag_counts:
+        console.print(Rule(style="dim red"))
+        console.print()
+        console.print(" [dim]your tags[/dim]")
+        console.print()
+
+        tag_line = Text(" ")
+        for tag, count in tag_counts.most_common(10):
+
+            style = "bold red" if count >= 3 else "red" if count >= 2 else "dim red"
+            tag_line.append(f" {tag}", style = f"bold black on red")
+            tag_line.append(f" x{count} ", style = "dim white")
+
+        console.print(tag_line)
         console.print()
     console.print(Rule(style="dim red"))
     console.print()
@@ -654,24 +780,69 @@ def show_search_screen():
     if min_raw.isdigit() and 1 <= int(min_raw) <= 10:
         min_rating = int(min_raw)
 
+    console.print(" [bold red]›[/bold red] Filter by tag[dim](or press Enter to skip[/dim])")
+    tag_filter = input(" ").strip().lower() or None
+    console.print()
 
-    if not query and min_rating is None:
+    if not query and min_rating is None and tag_filter is None:
         results = storage.get_all_entries()
 
     else:
-        results = storage.search_entries(query=query, min_rating=min_rating)
+        results = storage.search_entries(query=query, min_rating=min_rating, tag = tag_filter)
 
     console.clear()
     clear_and_header("search results")
     console.print()
 
-    if query and min_rating:
-        console.print(f"  [dim]'{query}'  ·  rated {min_rating}+[/dim]")
-    elif query:
-        console.print(f"  [dim]'{query}'[/dim]")
-    elif min_rating:
-        console.print(f"  [dim]rated {min_rating} or above[/dim]")
-    else:
-        console.print(f"  [dim]all films[/dim]")
-
+    filters = []
+    if query:    filters.append(f" {query}'")
+    if min_rating: filters.append(f" rated {min_rating}+")
+    if tag_filter: filters.append(f"#{tag_filter}")
+    console.print(f"  [dim]{' · '.join(filters) if filters else 'all films'}[/dim]")
     console.print()
+
+    if not results:
+        console.print(" [dim] No films match your search.[/dim]")
+        console.print()
+        console.print(" [dim] press any key to search again ·  [/dim][bold red]Q[/bold red][dim] to go back[/dim]")
+        key = readchar.readkey().lower()
+        if key == "q":
+            return "menu"
+        return show_search_screen()
+    
+# results
+    console.print(f"   [dim]{len(results)} result{'s' if len(results) != 1 else ''}[/dim]")
+    console.print()
+
+    for i , entry in enumerate(results, start=1):
+        row = render_entry_row(i, entry)
+        console.print(row)
+        console.print()
+
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print( " [bold red][1-9][/bold red][dim] open entry[/dim]")
+    console.print("  [bold red][/][/bold red][dim] search again[/dim]")
+    console.print("  [bold red][Q][/bold red][dim] back to menu[/dim]")
+    console.print()
+
+    while True:
+        key = readchar.readkey().lower()
+
+        if key == "q":
+            return "menu"
+
+        elif key == "/":
+            return show_search_screen()
+
+        elif key.isdigit():
+            index = int(key)
+            if 1 <= index <= len(results):
+                entry = results[index - 1]
+
+                next_screen = show_detail_screen(entry)
+                if next_screen == "diary":
+
+                    return show_search_screen()
+                return next_screen
+

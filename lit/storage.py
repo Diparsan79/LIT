@@ -125,7 +125,7 @@ def remove_from_watchlist(item_id):
     save_watchlist(items)
     return True
 
-def search_entries(query= "", min_rating = None, max_rating = None):
+def search_entries(query= "", min_rating = None, max_rating = None, tag = None):
     entries = get_all_entries()
     results = []
 
@@ -147,7 +147,26 @@ def search_entries(query= "", min_rating = None, max_rating = None):
         if max_rating is not None:
             if rating is None or rating > max_rating:
                 continue
+        
+        if tag is not None:
+            entry_tags = entry.get("tags", [])
+            if tag.strip().lower() not in entry_tags:
+                continue
 
         results.append(entry)
 
     return results
+
+def get_all_tags():
+    from collections import Counter
+    entries = load_entries()
+    all_tags = []
+    for entry in entries:
+        all_tags.extend(entry.get("tags", []))
+    return Counter(all_tags)
+
+def search_by_tag(tag):
+
+    tag = tag.strip().lower()
+    entries = get_all_entries()
+    return [e for e in entries if tag in e.get("tags", [])]
