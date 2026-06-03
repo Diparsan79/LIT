@@ -846,3 +846,42 @@ def show_search_screen():
                     return show_search_screen()
                 return next_screen
 
+#Export screen
+def show_export_screen():
+    clear_and_header("export to letterboxd")
+
+    entries = storage.get_all_entries()
+
+    if not entries:
+        console.print()
+        console.print(" [dim]Nothing to export. Log some films first.[/din]")
+        console.print()
+        console.print(" [dim]press any key to go back[/dim]")
+        readchar.readkey()
+        return "menu"
+    
+# preview
+    console.print()
+    console.print(f"  [white]Ready to export {len(entries)}"
+                  f"film{'s' if len(entries) != 1 else ''} to letterboxd CSV.[/white]")
+    console.print()
+    
+    console.print(" preview (first 5 entries):")
+    console.print()
+
+    for entry in entries[:5]:
+        rating_str = f"{entry['rating']}/10" if entry.get("rating") else "unrated"
+        date_str = format_date(entry.get("watched_date", ""))
+        tags_str = ", ".join(entry.get("tags", [])) or "-"
+
+        console.print(f" [bold white]{entry['title']}[/bold white]")
+        console.print(f" [dim] {date_str}  ·  {rating_str}  {tags_str}[/dim]")
+        console.print()
+
+    if len(entries) > 5:
+        console.print(f"  [dim]  ... and {len(entries) - 5} more [/dim]")
+        console.print()
+
+    console.print(Rule(style="dim red"))
+    console.print()
+    
