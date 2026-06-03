@@ -7,6 +7,7 @@ from pathlib import Path
 DATA_DIR = Path(__file__).parent.parent / "data"
 ENTRIES_FILE= DATA_DIR / "entries.json"
 WATCHLIST_FILE = DATA_DIR / "watchlist.json"
+EXPORTS_DIR = Path(__file__).parent.parent / "exports"
 
 # storage functions
 
@@ -170,3 +171,55 @@ def search_by_tag(tag):
     tag = tag.strip().lower()
     entries = get_all_entries()
     return [e for e in entries if tag in e.get("tags", [])]
+
+
+def export_to_letterboxd_csv():
+    import csv
+    from datetime import datetime
+
+    entries = get_all_entries()
+
+    if not entries:
+        return None
+    
+    EXPORTS_DIR.mkdir(exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = EXPORTS_DIR / f"lit_export_{timestamp}.csv"
+
+    from collections import Counter
+    title_counts = Counter(
+        e.get("title", "").strip().lower()
+        for e in entries
+    )
+
+    with open(filename, "w", newline = "", encoding ="utf-8") as f:
+
+        writer = csv.DictWriter(f, fieldnames = [
+            "Title", "Year", "Rating10", "WatchedDate",
+            "Rewatch", "Tags", "Review"
+        ])
+
+        writer.writeheader()
+
+        chronological = sorted(entries, key = lambda e: e["watched_date"])
+
+        for entry in chronological:
+            title = entry.get("Title", "")
+
+            is_rewatch = title_counts[title.strip().lower()] > 1
+            tags = ", ".join(entry.get("tags", []))
+            
+
+            writers.writerow({
+                "Title": title,
+                "Year": entry.get("year") or "",
+                "Rating10": entry.get("rating") or "",
+                "WatchedDate": entry.get("watched_date", ""),
+                "Rewatch": "Yes" if is_rewatch else "",
+                "Tags": tags,
+                "Review": entry.get("review", "")
+            })
+
+    return str(filename)
+
