@@ -211,7 +211,7 @@ def export_to_letterboxd_csv():
             tags = ", ".join(entry.get("tags", []))
             
 
-            writers.writerow({
+            writer.writerow({
                 "Title": title,
                 "Year": entry.get("year") or "",
                 "Rating10": entry.get("rating") or "",
