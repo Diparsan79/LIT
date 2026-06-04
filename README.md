@@ -44,3 +44,6 @@ just added the surprise me functionality and also completed the exporting functi
 insights:
 i think this project has been the besttt fuel for my learning recently and also for my 720Ns  hehee.
 adiosssss
+
+js me getting a new git commit for the brand new day
+hehe
