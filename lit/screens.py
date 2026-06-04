@@ -885,3 +885,44 @@ def show_export_screen():
     console.print(Rule(style="dim red"))
     console.print()
     
+
+    console.print(" [dim]Format Letterboxd CSV import [/dim]")
+    console.print("[dim]Columns  Title  ·  Year  ·  Rating  ·  Date  ·  Rewatch  ·  Tags  ·  Review[/dim]")
+    console.print("[dim]Saved to exports/folder with timestamp[/dim]")
+    console.print(Rule(style="dim red"))
+    console.print()
+
+    console.print("  [bold red]›[/bold red] Export now?[dim](y/n)[/dim]")
+    confirm=readchar.readkey().lower()
+
+    if confirm != "y":
+        console.print()
+        console.print(" [dim]export cancelled.[/dim]")
+        console.print()
+        console.print(" [dim]press any key to go back[/dim]")
+        readchar.readkey()
+        return "menu"
+    
+    console.print()
+    console.print(" [dim]exporting...[/dim]")
+
+    filepath = storage.export_to_letterboxd_csv()
+    if filepath:
+        console.print()
+        console.print(" [bold red]✓[/bold red] [white]Export complete.[/white]")
+        console.print()
+        console.print(f" [dim]saved to:[/dim]")
+        console.print("[white]{filepath}[/white]")
+        console.print()
+        console.print(" [dim]Upload this file at:[/dim]")
+        console.print(" [white]Letterboxd.com/import[/white]")
+    else:
+        console.print()
+        console.print(" [dim red]Export failed. No entries found.[/dim red]")
+
+    console.print()
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print(" [dim]press any key to go back.[/dim]")
+    readchar.readkey()
+    return "menu"

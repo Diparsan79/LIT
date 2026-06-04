@@ -36,7 +36,8 @@ def render_menu():
         ("D", "diary"),
         ("w", "watchlist"),
         ("S", "search"),
-        ("T", "Stats")
+        ("T", "Stats"),
+        ("E", "export"),
         ("Q", "quit"),
     ]
 
@@ -95,6 +96,8 @@ def handle_menu_input(key):
         APP_STATE["screen"]="search"
     elif key =="t":
         APP_STATE["screen"]="stats"
+    elif key=="e":
+        APP_STATE["screen"]="export"
     elif key =="q":
         APP_STATE["running"]= False
 
@@ -133,6 +136,9 @@ def main():
             APP_STATE["screen"] = next_screen
         elif APP_STATE["screen"] =="stats":
             next_screen = screens.show_stats_screen()
+            APP_STATE["screen"] = next_screen
+        elif APP_STATE["screen"] =="export":
+            next_screen = screens.show_export_screen()
             APP_STATE["screen"] = next_screen
     
     console.clear()
