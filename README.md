@@ -31,3 +31,16 @@ the project's been going kinda good but i think i should've left more commits as
 i plan to add some features like exporting data that is ready to be pasted into letterboxd's upload movie logs section. I think this is the best feature ive planned as of now.
 
 this project should be done in less than a week if i don't get distracted by other projects. i think im on well track to finish this project with like 1000 gold.
+
+4 june
+just added the surprise me functionality and also completed the exporting functionality
+
+> surprise me 
+- it means it pulls a random movie off of your watchlist and you have to watch it. THATS THE RULEEE
+
+> export
+- this feature exports all your logged movies and all the data required and converts them into a csv file , which you can directly upload into letterboxd for logging movies
+
+insights:
+i think this project has been the besttt fuel for my learning recently and also for my 720Ns  hehee.
+adiosssss
