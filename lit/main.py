@@ -38,6 +38,7 @@ def render_menu():
         ("S", "search"),
         ("T", "Stats"),
         ("E", "export"),
+        ("X", "surprise me"),
         ("Q", "quit"),
     ]
 
@@ -98,6 +99,8 @@ def handle_menu_input(key):
         APP_STATE["screen"]="stats"
     elif key=="e":
         APP_STATE["screen"]="export"
+    elif key =="x":
+        APP_STATE["screen"] ="surprise"
     elif key =="q":
         APP_STATE["running"]= False
 
@@ -140,6 +143,13 @@ def main():
         elif APP_STATE["screen"] =="export":
             next_screen = screens.show_export_screen()
             APP_STATE["screen"] = next_screen
+        elif APP_STATE["screen"] == "surprise":
+            result = screens.show_surprise_screen()
+            if isinstance(result, tuple):
+                next_screen, prefill = result
+                APP_STATE["prefill_title"] = prefill
+            else:
+                APP_STATE["screen"] = result
     
     console.clear()
     console.print("\n[dim red] goodbye ,  beloved cinephile. [/dim red]")

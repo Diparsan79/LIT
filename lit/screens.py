@@ -927,7 +927,7 @@ def show_export_screen():
     readchar.readkey()
     return "menu"
 
-def show_surprice_screen():
+def show_surprise_screen():
     clear_and_header("Surprise Me")
     console.print()
 
