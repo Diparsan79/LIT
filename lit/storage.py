@@ -223,3 +223,7 @@ def export_to_letterboxd_csv():
 
     return str(filename)
 
+def get_random_watchlist_item():
+    import random
+    items = get_watchlist()
+    return random.choice(items) if items else None

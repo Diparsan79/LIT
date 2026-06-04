@@ -926,3 +926,49 @@ def show_export_screen():
     console.print(" [dim]press any key to go back.[/dim]")
     readchar.readkey()
     return "menu"
+
+def show_surprice_screen():
+    clear_and_header("Surprise Me")
+    console.print()
+
+    item = storage.get_random_watchlist_item()
+
+    if not item:
+        console.print(" [dim]Your watchlist is empty.[/dim]")
+        console.print()
+        console.print(" [dim]Add films to your watchlist first - press [/dim][bold red]W[/bold red][fim]from the menu.[/dim]")
+        console.print()
+        console.print()
+
+        title_text = Text()
+        title_text.append(f" {item['title']}", style ="bold white")
+        console.print(title_text)
+
+        meta_parts = []
+        if item.get("director"): meta_parts.append(item["director"])
+        if item.get("year"): meta_parts.append(str(item["year"]))
+        if meta_parts:
+            console.print(f" [dim] {' · '.join(meta_parts)}[/dim]")
+
+        if item.get("note"):
+            console.print()
+            console.print(f" [dim]\"{item['note']}\"[/dim]")
+
+        console.print()
+        console.print(Rule(style="dim red"))
+        console.print()
+        console.print(" [bold red][W][/bold red][dim] mark as watched now[/dim]")
+        console.print(" [bold red][R][/bold res][dim] pick another [/dim]")
+        console.print(" [bold red][Q][/bold red][dim] back to menu[/dim]")
+        console.print()
+        
+        while True:
+            key= readchar.readkey().lower()
+
+            if key== "q":
+                return "menu"
+            elif key =="r":
+                return show_surprise_screen()
+            elif key == "w":
+                storage.remove_from_watchlist(item["id"])
+                return "log", item["title"]
