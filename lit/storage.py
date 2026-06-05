@@ -227,3 +227,18 @@ def get_random_watchlist_item():
     import random
     items = get_watchlist()
     return random.choice(items) if items else None
+
+def get_entries_by_year(year):
+    entries = get_all_entries()
+    return [
+        e for e in entries
+        if e.get("watched_date", "").startswith(str(year))
+    ]
+def get_available_years():
+    entries = load_entries()
+    years = set()
+    for e in entries:
+        date = e.get("watched_date", "")
+        if date:
+            years.add(int(date[:4]))
+    return sorted(years, reverse=True)

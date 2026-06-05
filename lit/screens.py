@@ -6,6 +6,8 @@ from rich.align import Align
 from rich.rule import Rule
 from . import storage
 import readchar
+import os
+from . import tmdb
 
 
 console = Console()
@@ -77,19 +79,73 @@ def show_log_screen(prefill_title=None):
                 break
             console.print(" [dim red] Title is required.[/dim red]")
             console.print()
+    tmdb_data = None
 
-    director = prompt("Director", optional=True)
-    year = prompt_year()
+    if TMDB_API_KEY := os.getenv("TMDB_API_KEY", ""):
+        console.print()
+        console.print(" [dim]searching TMDB...[/dim]")
+
+        results = tmdb.search_film(title)
+
+        if results:
+            console.clear()
+            clear_and_header("log a film")
+            console.print()
+            console.print(f" [dim]TMDB results for '[/dim][white]{title}[/white][dim]':[/dim]")
+            console.print()
+
+            for i,r in enumerate(results, start=1):
+                year = r.get("release_date", "")[:4] or "-"
+                console.print(
+                    f" [bold red]{i}[/bold red] "
+                    f"[white]{r['title']}[/white] "
+                    f"[dim]{year}[/dim]"
+                )
+            console.print()
+            console.print(f" [bold red]0[/bold red] [dim]none of these - enter manually[/dim]")
+            console.print()
+            console.print(" [dim]pick a result:[/dim]")
+
+            while True:
+                key = readchar.readkey()
+                if key =="0":
+                    break
+                if key.isdigit():
+                    idx = int(key)
+                    if 1 <= idx <= len(results):
+
+                        console.print()
+                        console.print(" [dim]fetching details...[/dim]")
+                        tmdb_data = tmdb.get_film_details(results[idx - 1]["id"])
+                        if tmdb_data:
+                            title = tmdb_data["title"]
+                            director = tmdb_data["director"]
+                            year = tmdb_data["year"]
+                            tags = tmdb_data["tags"]
+
+                            console.print()
+                            console.print(" [bold red]✓[/bold red] [dim]details fetched from TMDB[/dim]")
+                            console.print()
+                            console.print(f" [dim]Title [/dim][white]{title}[/white]")
+                            console.print(f" [dim]DIrector [/dim][white]{director}[/white]")
+                            console.print(f" [dimTags [/dim][white]{','.join(tags)}[/white]]")
+                            console.print()
+                            console.print(" [dim]press Enter to continue --- or type to override any field[/dim]")
+                            input()
+                        break
+    if not tmdb_data:
+        director = prompt("Director", optional=True)
+        year = prompt_year()
     rating = prompt_rating()
     
     console.print(" [bold red]›[/bold red] Review [dim](optional) - press Enter twice when done)[/dim]")
     console.print(" [dim] for a single line review just type and hit enter)[/dim]")
     review= input("       ").strip()
 
-    console.print(" [bold red]›[/bold red] Tags [dim](optional - comma separated, e.g. Surreal, horror[/dim])")
-    tags_raw = input("    ").strip()
-    console.input()
-    tags = [t.strip().lower() for t in tags_raw.split(",") if t.strip()]
+    if not tmdb_data:
+        console.print(" [bold red]›[/bold red] Tags [dim](optional - comma separated)[/dim]")
+        tags_raw=input(" ").strip()
+        tags = [t.strip().lower() for t in tags_raw.split(",") if t.strip()]
 # confirming ig?
     console.print()
     console.print(Rule(style="dim red"))

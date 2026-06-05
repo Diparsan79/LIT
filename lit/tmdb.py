@@ -1,0 +1,61 @@
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+TMDB_BASE_URL = "https://api.themovie.org/3"
+
+def search_film(title):
+    if not TMDB_API_KEY:
+        return []
+    
+    try:
+        response = requests.get(
+            f"{TMDB_BASE_URL}/search/movie",
+            params ={
+                "api-key": TMDB_API_KEY,
+                "query": title,
+            },
+            timeout = 5
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data.get("results", [])[:5]
+    except Exception:
+        return []
+    
+def get_film_details(tmdb_id):
+    if not TMDB_API_KEY:
+        return None
+    
+    try:
+        response = requests.get(
+            f"{TMDB_BASE_URL}/movie/{tmdb_id}",
+            params={
+                "api-key": TMDB_API_KEY,
+                "append_to_response": "credits",
+            },
+            timeout = 5       
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        director = ""
+        crew = data.get("credits", {}.get("crew"), [])
+        for member in crew:
+            if member.get("job") =="Director":
+                director = member.get("name", "")
+                break
+        genres = [g["name"].lower() for g in data.get("genres", [])]
+
+        return {
+            "title": data.get("title", ""),
+            "year": int(data["release_date"][:4]) if data.get("release_date") else None,
+            "director": director,
+            "tags": genres,
+        }
+    except Exception:
+        return None
+    
