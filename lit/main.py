@@ -39,7 +39,8 @@ def render_menu():
         ("T", "Stats"),
         ("E", "export"),
         ("X", "surprise me"),
-        ("Q", "quit"),
+        ("Y", "year in review"),
+        ("Q", "quit")
     ]
 
     for key, label in options:
@@ -101,6 +102,8 @@ def handle_menu_input(key):
         APP_STATE["screen"]="export"
     elif key =="x":
         APP_STATE["screen"] ="surprise"
+    elif key =="y":
+        APP_STATE["screen"] = "year"
     elif key =="q":
         APP_STATE["running"]= False
 
@@ -150,6 +153,10 @@ def main():
                 APP_STATE["prefill_title"] = prefill
             else:
                 APP_STATE["screen"] = result
+        
+        elif APP_STATE["screen"] =="year":
+            next_screen = screens.show_year_in_review()
+            APP_STATE["screen"] = next_screen
     
     console.clear()
     console.print("\n[dim red] goodbye ,  beloved cinephile. [/dim red]")

@@ -1068,4 +1068,92 @@ def show_year_in_review():
     entries = storage.get_entries_by_year(selected_year)
     rated= [e for e in entries if e.get("rating")]
 
-    total =
+    total = len(entries)
+    avg_rating = round(sum(e["rating"] for e in rated) / len(rated), 1) if rated else None
+    top_entry = max(rated,key=lambda e: e["rating"]) if rated else None
+
+    directors = [e["director"] for e in entries if e.get("director", "").strip()]
+    fav_director = Counter(directors).most_common(1)[0] if directors else None
+
+    all_tags = []
+    for e in entries:
+        all_tags.extend(e.get("tags", []))
+    top_tags = Counter(all_tags).most_common(3)\
+    
+    rating_counts = Counter(e["rating"] for e in rated)
+
+    console.clear()
+    clear_and_header(f"{selected_year} in review")
+    console.print()
+
+    console.print(f" [bold red]{selected_year}[/bold red]")
+    console.print()
+
+    console.print(f" [bold red]›[/bold red] [white]Films watched[/white] [yellow]{total}[/yellow]")
+    console.print()
+
+    if avg_rating:
+        console.print(f" [bold red]›[/bold red] [white]Agerage rating[/white] [yellow]{avg_rating}[/yellow]/ 10")
+        console.print()
+    
+    if top_entry:
+        console.print(f" [bold red]›[/bold red] [white]Best film[/white] {top_entry['title']} [dim]({top_entry['rating']}/10)[/dim]")
+        console.print()
+
+    if fav_director:
+        name, count = fav_director
+        console.print(f" [bold red]›[/bold red] [white]Top director[/white] {name} [dim]({count} film{'s' if count != 1 else ''})[/dim]")
+        console.print()
+
+    if top_tags:
+        tags_str = "  ".join(f"[bold red] {t} [/bold red]"for t, _ in top_tags)
+        console.print(f" [bold red]›[/bold red] [white]Top tags[/white]")
+        console.print()
+        console.print(f" {tags_str}")
+        console.print()
+
+#top 5 films of the year
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print(f" [dim]top films of {selected_year}[/dim]")
+    console.print()
+
+    top_5 = sorted(rated, key=lambda e: e["rating"], reverse =True)[:5]
+
+    for i, entry in enumerate(top_5,start=1):
+        filled = "*" * entry["rating"]
+        empty = "o" * (10-entry["rating"])
+        console.print(
+            f" [bold red]{i}[/bold red] "
+            f"[white]{entry['title']:<35}[/white] "
+            f"[yellow]{filled}[/yellow][dim]{empty}[/dim]"
+        )
+        console.print()
+        
+    if rating_counts:
+        console.print(Rule(style="dim red"))
+        console.print()
+        console.print(" [dim]rating distribution[/dim]")
+        console.print()
+
+        max_count = max(rating_counts.values())
+        for star in range(1,11):
+            count = rating_counts.get(star, 0)
+            bar_length = int((count / max_count) * 20) if max_count > 0 else 0
+            filled = "█" * bar_length
+            empty = "░" * (20 - bar_length)
+            if count > 0:
+                console.print(f" [dim]{star:>2}[/dim] [yellow]{filled}[/yellow][dim] {empty} {count} [/dim]")
+            else:
+                console.print(f" [dim]{star:>2} {filled}{empty} {count}[/dim]")
+            
+        console.print()
+
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print()
+    console.print(" [dim]press any key to go back [/dim]")
+    readchar.readkey()
+    return "menu"
+
+        
