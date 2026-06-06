@@ -1028,3 +1028,44 @@ def show_surprise_screen():
             elif key == "w":
                 storage.remove_from_watchlist(item["id"])
                 return "log", item["title"]
+            
+def show_year_in_review():
+    from collections import Counter
+
+    clear_and_header("year in review")
+    console.print()
+    
+    years = storage.get_available_years()
+
+    if not years:
+        console.print(" [dim]No films logged yet.[/dim]")
+        console.print()
+        console.print(" [dim]press any key to go back[/dim]")
+        readchar.readkey()
+        return "menu"
+    console.print(" [dim]Select a year:[/dim]")
+    console.print()
+
+    for i, year in enumerate(years, start=1):
+        count = len(storage.get_entries_by_year(year))
+        console.print(
+            f" [bold red]{i}[/bold red] "
+            f"[white]{year}[/white] "
+            f"[dim]{count} film{'s' if count != 1 else ''}[/dim]"
+        )
+    console.print()
+
+    while True:
+        key= readchar.readkey()
+        if key =="q":
+            return "menu"
+        if key.isdigit():
+            idx = int(key)
+            if 1 <= idx <= len(years):
+                selected_year = years[idx - 1]
+                break
+    
+    entries = storage.get_entries_by_year(selected_year)
+    rated= [e for e in entries if e.get("rating")]
+
+    total =
