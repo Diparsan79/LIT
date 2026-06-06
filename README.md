@@ -47,3 +47,7 @@ adiosssss
 
 js me getting a new git commit for the brand new day
 hehe
+
+# june 6
+added the year in review feature
+all the features i had been planning for this project has finally been incorporated . Now im running out of feature ideas for this project. idk what im going to do but lets see what happens ig . 
