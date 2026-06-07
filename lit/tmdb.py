@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
-TMDB_BASE_URL = "https://api.themovie.org/3"
+TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 def search_film(title):
     if not TMDB_API_KEY:
@@ -15,7 +15,7 @@ def search_film(title):
         response = requests.get(
             f"{TMDB_BASE_URL}/search/movie",
             params ={
-                "api-key": TMDB_API_KEY,
+                "api_key": TMDB_API_KEY,
                 "query": title,
             },
             timeout = 5
@@ -34,7 +34,7 @@ def get_film_details(tmdb_id):
         response = requests.get(
             f"{TMDB_BASE_URL}/movie/{tmdb_id}",
             params={
-                "api-key": TMDB_API_KEY,
+                "api_key": TMDB_API_KEY,
                 "append_to_response": "credits",
             },
             timeout = 5       
@@ -43,7 +43,7 @@ def get_film_details(tmdb_id):
         data = response.json()
 
         director = ""
-        crew = data.get("credits", {}.get("crew"), [])
+        crew = data.get("credits", {}).get("crew", [])
         for member in crew:
             if member.get("job") =="Director":
                 director = member.get("name", "")
@@ -55,6 +55,7 @@ def get_film_details(tmdb_id):
             "year": int(data["release_date"][:4]) if data.get("release_date") else None,
             "director": director,
             "tags": genres,
+            "poster_path": data.get("poster_path", "")
         }
     except Exception:
         return None

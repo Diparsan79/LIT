@@ -2,6 +2,7 @@ import json
 import uuid
 from datetime import datetime, date
 from pathlib import Path
+import os
 
 #path setup
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -12,23 +13,34 @@ EXPORTS_DIR = Path(__file__).parent.parent / "exports"
 # storage functions
 
 def ensure_data_dir():
-    DATA_DIR.mkdir(exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 def load_entries():
     if not ENTRIES_FILE.exists():
         return []
-    content = ENTRIES_FILE.read_text(encoding="utf-8").strip()
-    if not content:
-        return[]
-    return json.loads(content)
+    try:
+        content = ENTRIES_FILE.read_text(encoding="utf-8").strip()
+        if not content:
+            return []
+        return json.loads(content)
+    except json.JSONDecodeError:
+        return []
+
     
 def save_entries(entries):
-    with open(ENTRIES_FILE, "w", encoding="utf-8") as f:
+    ensure_data_dir()
+    tmp_file = ENTRIES_FILE.with_suffix(".tmp")
+
+    with open(tmp_file, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)
+
+    os.replace(tmp_file, ENTRIES_FILE)
 
 #creating entry setup
 
-def create_entry(title, director="", year=None, rating=None, review="", watched_date=None, tags=None):
+def create_entry(title, director="", year=None, rating=None, review="", watched_date=None, tags=None, poster_path=""):
+    ensure_data_dir()
     entries= load_entries()
 
     new_entry= {
@@ -38,12 +50,10 @@ def create_entry(title, director="", year=None, rating=None, review="", watched_
         "year": year,
         "rating": rating,
         "review": review.strip(),
-        "year": year,
-        "rating": rating,
-        "review": review.strip(),
         "watched_date": watched_date or date.today().isoformat(),
         "created_at": datetime.now().isoformat(),
-        "tags": tags or []
+        "tags": tags or [],
+        "poster_path": poster_path
     }
     entries.append(new_entry)
     save_entries(entries)
@@ -75,39 +85,48 @@ def update_entry(entry_id, **kwargs):
 # im using kwargs to make partial updates so that user doesnt have to update each value every time
     entries = load_entries()
     for entry in entries:
-        for field,value in kwargs.items():
-
-            if field in entry:
-                entry[field]= value
-        save_entries(entries)
-        return entry
+        if entry["id"] == entry_id:
+            for field, value in kwargs.items():
+                if field in entry:
+                    entry[field] = value
+            save_entries(entries)
+            return entry
+        
     return None
 
 
 def load_watchlist():
     if not WATCHLIST_FILE.exists():
         return []
-    content = WATCHLIST_FILE.read_text(encoding = "utf-8").strip()
-    if not content:
+    try:
+        content = WATCHLIST_FILE.read_text(encoding="utf=8").strip()
+        if not content:
+            return []
+        return json.loads(content)
+    except json.JSONDecodeError:
         return []
-    return json.loads(content)
 
 def save_watchlist(items):
     ensure_data_dir()
-    with open(WATCHLIST_FILE, "w", encoding = "utf-8") as f:
-        json.dump(items,f, indent = 2, ensure_ascii = False)
+    tmp_file = WATCHLIST_FILE.with_suffix(".tmp")
+
+    with open(tmp_file, "w", encoding="utf-8") as f:
+        json.dump(items, f, indent=2, ensure_ascii = False)
+
+
+    os.replace(tmp_file, WATCHLIST_FILE)
 
 def add_to_watchlist(title, director="", year = None, note = ""):
 
     items = load_watchlist()
-
+    
     new_item = {
-        "id":  str(uuid.uuid())[:8],
+        "id": str(uuid.uuid4())[:8],
         "title": title.strip(),
         "director": director.strip(),
         "year": year,
-        "note": note.strip(),
-        "added_note": date.today().isoformat()
+        "note": note.strip(), 
+        "added_date": date.today().isoformat()
     }
     items.append(new_item)
     save_watchlist(items)
@@ -118,13 +137,14 @@ def get_watchlist():
     return sorted(items, key=lambda i: i["added_date"], reverse = True)
 
 def remove_from_watchlist(item_id):
-    items = load_watchlist
+    items = load_watchlist()
     original_count = len(items)
     items = [i for i in items if i["id"] != item_id]
     if len(items) == original_count:
         return False
     save_watchlist(items)
     return True
+
 
 def search_entries(query= "", min_rating = None, max_rating = None, tag = None):
     entries = get_all_entries()
@@ -172,6 +192,14 @@ def search_by_tag(tag):
     entries = get_all_entries()
     return [e for e in entries if tag in e.get("tags", [])]
 
+def get_all_entries_by_title(title):
+    title = title.strip().lower()
+
+    return [
+        e for e in load_entries()
+        if e.get("title", "").strip().lower() ==title
+    ]
+
 
 def export_to_letterboxd_csv():
     import csv
@@ -205,7 +233,7 @@ def export_to_letterboxd_csv():
         chronological = sorted(entries, key = lambda e: e["watched_date"])
 
         for entry in chronological:
-            title = entry.get("Title", "")
+            title = entry.get("title", "")
 
             is_rewatch = title_counts[title.strip().lower()] > 1
             tags = ", ".join(entry.get("tags", []))
@@ -237,8 +265,9 @@ def get_entries_by_year(year):
 def get_available_years():
     entries = load_entries()
     years = set()
+
     for e in entries:
-        date = e.get("watched_date", "")
-        if date:
-            years.add(int(date[:4]))
-    return sorted(years, reverse=True)
+        d = e.get("watched_date", "")
+        if isinstance(d, str) and len(d) >= 4 and d[:4].isdigit():
+            years.add(int(d[:4]))
+    return sorted(years, reverse = True)

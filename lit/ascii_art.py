@@ -44,5 +44,8 @@ def url_to_ascii(image_url, width=60):
     except Exception:
         return None
     
-
-
+def poster_url_to_ascii(poster_path, width=55):
+    if not poster_path:
+        return None
+    full_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
+    return url_to_ascii(full_url, width=width)

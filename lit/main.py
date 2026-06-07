@@ -6,6 +6,7 @@ from rich.console import Group
 import readchar
 from . import screens
 from . import storage
+import os
 
 console = Console()
 
@@ -117,7 +118,10 @@ def main():
             handle_menu_input(key)
 
         elif APP_STATE["screen"] =="log":
-            next_screen = screens.show_log_screen()
+            next_screen = screens.show_log_screen(
+                APP_STATE["prefill_title"]
+            )
+            APP_STATE["prefill_title"] = None
             APP_STATE["screen"]= next_screen
 
         elif APP_STATE["screen"] =="diary":

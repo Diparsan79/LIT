@@ -8,6 +8,7 @@ from . import storage
 import readchar
 import os
 from . import tmdb
+from . import ascii_art
 
 
 console = Console()
@@ -58,6 +59,19 @@ def prompt_year():
         console.print(f" [dim red] Please enter a valid year (1888-{date.today().year}).[/dim red]")
         console.print()
 
+def multiliner_input(prompt_text=""):
+    print(prompt_text)
+    print("(Press ENTER twice to finish)")
+
+
+    lines = []
+    while True:
+        line = input()
+        if line.strip() == "":
+            break
+        lines.append(line)
+    return "\n".join(lines)
+
 def show_log_screen(prefill_title=None):
     clear_and_header("log a film")
     console.print(" [dim]Fill in what you know. Press Enter to skip optional fields.[/dim]")
@@ -67,7 +81,7 @@ def show_log_screen(prefill_title=None):
 #lets collect some data
     while True:
         if prefill_title:
-            console.print(f" [bold red]›[/bold red] Title[dim(pre-filled from watchlist)[/dim]]")
+            console.print(f" [bold red]›[/bold red] Title[dim(pre-filled from watchlist)[/dim]")
             console.print(f"    [white]{prefill_title}[/white] ")
             console.print("    [dim] press enter to keep, or type to change[/dim]")
             override = input("   ").strip()
@@ -81,6 +95,7 @@ def show_log_screen(prefill_title=None):
             console.print()
     tmdb_data = None
 
+    poster_path = ""
     if TMDB_API_KEY := os.getenv("TMDB_API_KEY", ""):
         console.print()
         console.print(" [dim]searching TMDB...[/dim]")
@@ -122,13 +137,14 @@ def show_log_screen(prefill_title=None):
                             director = tmdb_data["director"]
                             year = tmdb_data["year"]
                             tags = tmdb_data["tags"]
+                            poster_path = tmdb_data.get("poster_path", "")
 
                             console.print()
                             console.print(" [bold red]✓[/bold red] [dim]details fetched from TMDB[/dim]")
                             console.print()
                             console.print(f" [dim]Title [/dim][white]{title}[/white]")
                             console.print(f" [dim]DIrector [/dim][white]{director}[/white]")
-                            console.print(f" [dimTags [/dim][white]{','.join(tags)}[/white]]")
+                            console.print(f" [dim]Tags [/dim][white]{','.join(tags)}[/white]]")
                             console.print()
                             console.print(" [dim]press Enter to continue --- or type to override any field[/dim]")
                             input()
@@ -140,7 +156,7 @@ def show_log_screen(prefill_title=None):
     
     console.print(" [bold red]›[/bold red] Review [dim](optional) - press Enter twice when done)[/dim]")
     console.print(" [dim] for a single line review just type and hit enter)[/dim]")
-    review= input("       ").strip()
+    review = multiliner_input("Write review:")
 
     if not tmdb_data:
         console.print(" [bold red]›[/bold red] Tags [dim](optional - comma separated)[/dim]")
@@ -174,32 +190,31 @@ def show_log_screen(prefill_title=None):
     confirm= input("    ").strip().lower()
 
     if confirm =="y":
+
+        previous_watches = storage.get_all_entries_by_title(title)
         entry = storage.create_entry(
             title=title,
             director=director,
             year=year,
             rating=rating,
             review=review,
-            tags=tags
+            tags=tags,
+            poster_path=poster_path
         )
         console.print()
         console.print(f" [bold red] Done[/bold red] [white]'{entry['title']}' [/white] [dim]saved.[/dim]")
         console.print()
         console.print(" [dim]press any key to return to menu[/dim]")
         readchar.readkey()
-
     else:
         console.print()
         console.print(" [dim]cancelled. Nothing was saved :( [/dim])")
         console.print()
         console.print(" [dim]press Enter to return to menu[/dim]")
         readchar.readkey()
-
-    previous_watches = storage.get_entries_by_title(title)
-
     if previous_watches:
-        console.print()
         count = len(previous_watches)
+        console.print()
         console.print(f"  [bold red]![/bold red] [white]You've logged this film {count} time{'s' if count != 1 else ''} before.[/white]")
         console.print()
 
@@ -220,7 +235,7 @@ def render_stars(rating):
         return "[dim]------------[/dim]"
     
     filled = "*" * rating
-    empty = "O" (10-rating)
+    empty = "O" * (10-rating)
     return f"[yellow]{filled}[/yellow][dim]{empty}[/dim]"
 
 def format_date(iso_date_string):
@@ -259,7 +274,8 @@ def render_entry_row(index, entry):
 
     if meta:
         row.append(f"\n     [dim] {meta} [/dim]")
-        return row
+    
+    return row
 
 # diary screen
 def show_diary_screen():
@@ -290,13 +306,13 @@ def show_diary_screen():
     console.print()
 
     while True:
-        key = readchar.readkey().lower()
+        choice = input("Select film id# or enter "+"q"+" to return to menu").strip()
 
-        if key =="q":
+        if choice =="q":
             return "menu", None
         
-        if key.isdigit():
-            index = int(key)
+        if choice.isdigit():
+            index = int(choice)
             if 1 <= index <= len(entries):
                 entry = entries[index -1]
                 return "detail", entry
@@ -306,6 +322,24 @@ def show_detail_screen(entry):
         return "menu"
     clear_and_header("entry detail")
     console.print()
+    poster_path = entry.get("poster_path", "")
+
+    if poster_path:
+        console.print()
+        console.print(" [dim]fetching poster...[/dim]", end="\r")
+
+        rows = ascii_art.poster_url_to_ascii(poster_path, width=55)
+
+        if rows:
+            console.print(" " * 30, end="\r")
+
+
+            for row in rows:
+                console.print(f" [dim]{row}[/dim]")
+            
+            console.print()
+        else:
+            console.print(" " * 30, end="\r")
 
     title_text = Text()
     title_text.append(entry.get("title", "Unknown"), style="bold white")
@@ -356,6 +390,8 @@ def show_detail_screen(entry):
                 arc = f"[green]+ {diff} since first watch[/green]"
             elif diff < 0:
                 arc = f"[red]{diff} since first watch[/dim]"
+            else:
+                arc = "[dim]No rating change[/dim]"
 
             console.print()
             console.print(f"   {arc}")
@@ -458,7 +494,7 @@ def show_edit_screen(entry):
 
         return new_value if new_value else current
 
-    new_title = edit_prompt("Title", entry.get("Title"))
+    new_title = edit_prompt("Title", entry.get("title"))
     new_director = edit_prompt("Director", entry.get("director", ""))
 
 
@@ -741,23 +777,23 @@ def show_watchlist_screen():
     console.print()
 
     while True:
-        key = readchar.readkey().lower()
+        choice = input("Select a command/key:").strip()
 
-        if key == "q":
+        if choice == "q":
             return "menu", None
         
-        elif  key == "a":
+        elif  choice == "a":
             show_add_to_watchlist()
             return show_watchlist_screen()
         
-        elif key == "r":
-            show_add_to_watchlist(items)
+        elif choice == "r":
+            show_remove_from_watchlist(items)
             return show_watchlist_screen()
         
-        elif key.isdigit():
-            index = int(key)
+        elif choice.isdigit():
+            index = int(choice)
             if 1 <= index <= len(items):
-                item = item[index - 1]
+                item = items[index - 1]
 
 
                 console.print()
@@ -785,8 +821,16 @@ def show_add_to_watchlist():
 
     while True:
         title = prompt("Title")
-        if title:
-            break
+        director = prompt("Director", optional =True)
+        year = prompt_year()
+        note = prompt("Note", optional=True)
+        
+        storage.add_to_watchlist(
+            title,
+            director,
+            year,
+            note
+        )
         console.print("   [dim red] Title is required.[/dim red]")
         console.print()
         console.print("   [dim] press any key to continue[/dim]")
@@ -799,17 +843,17 @@ def show_remove_from_watchlist(items):
     console.print()
 
     while True:
-        key = readchar.readkey().lower()
+        choice = input(" enter the movie id:")
 
-        if key == "q":
+        if choice == "q":
             return
         
-        if key.isdigit():
-            index = int(key)
+        if choice.isdigit():
+            index = int(choice)
             if 1 <= index <= len(items):
                 item = items[index - 1]
                 console.print(f"  [dim] remove '[/dim][white]{item['title']} [/white][dim]'? (y/n)[/dim]")
-                confirm = readchar.readkey.lower()
+                confirm = readchar.readkey().lower()
 
                 if confirm =="y":
                     storage.remove_from_watchlist(item["id"])
@@ -836,7 +880,7 @@ def show_search_screen():
     if min_raw.isdigit() and 1 <= int(min_raw) <= 10:
         min_rating = int(min_raw)
 
-    console.print(" [bold red]›[/bold red] Filter by tag[dim](or press Enter to skip[/dim])")
+    console.print(" [bold red]›[/bold red] Filter by tag [dim](or press Enter to skip)[/dim]")
     tag_filter = input(" ").strip().lower() or None
     console.print()
 
@@ -851,7 +895,7 @@ def show_search_screen():
     console.print()
 
     filters = []
-    if query:    filters.append(f" {query}'")
+    if query:    filters.append(query)
     if min_rating: filters.append(f" rated {min_rating}+")
     if tag_filter: filters.append(f"#{tag_filter}")
     console.print(f"  [dim]{' · '.join(filters) if filters else 'all films'}[/dim]")
@@ -910,7 +954,7 @@ def show_export_screen():
 
     if not entries:
         console.print()
-        console.print(" [dim]Nothing to export. Log some films first.[/din]")
+        console.print(" [dim]Nothing to export. Log some films first.[/dim]")
         console.print()
         console.print(" [dim]press any key to go back[/dim]")
         readchar.readkey()
@@ -968,10 +1012,10 @@ def show_export_screen():
         console.print(" [bold red]✓[/bold red] [white]Export complete.[/white]")
         console.print()
         console.print(f" [dim]saved to:[/dim]")
-        console.print("[white]{filepath}[/white]")
+        console.print("f[white]{filepath}[/white]")
         console.print()
-        console.print(" [dim]Upload this file at:[/dim]")
-        console.print(" [white]Letterboxd.com/import[/white]")
+        console.print(f" [dim]Upload this file at:[/dim]")
+        console.print(f"[white]Letterboxd.com/import[/white]")
     else:
         console.print()
         console.print(" [dim red]Export failed. No entries found.[/dim red]")
@@ -995,39 +1039,39 @@ def show_surprise_screen():
         console.print(" [dim]Add films to your watchlist first - press [/dim][bold red]W[/bold red][fim]from the menu.[/dim]")
         console.print()
         console.print()
+        return "menu"
+    title_text = Text()
+    title_text.append(f" {item['title']}", style ="bold white")
+    console.print(title_text)
 
-        title_text = Text()
-        title_text.append(f" {item['title']}", style ="bold white")
-        console.print(title_text)
+    meta_parts = []
+    if item.get("director"): meta_parts.append(item["director"])
+    if item.get("year"): meta_parts.append(str(item["year"]))
+    if meta_parts:
+        console.print(f" [dim] {' · '.join(meta_parts)}[/dim]")
 
-        meta_parts = []
-        if item.get("director"): meta_parts.append(item["director"])
-        if item.get("year"): meta_parts.append(str(item["year"]))
-        if meta_parts:
-            console.print(f" [dim] {' · '.join(meta_parts)}[/dim]")
-
-        if item.get("note"):
-            console.print()
-            console.print(f" [dim]\"{item['note']}\"[/dim]")
-
+    if item.get("note"):
         console.print()
-        console.print(Rule(style="dim red"))
-        console.print()
-        console.print(" [bold red][W][/bold red][dim] mark as watched now[/dim]")
-        console.print(" [bold red][R][/bold res][dim] pick another [/dim]")
-        console.print(" [bold red][Q][/bold red][dim] back to menu[/dim]")
-        console.print()
-        
-        while True:
-            key= readchar.readkey().lower()
+        console.print(f" [dim]\"{item['note']}\"[/dim]")
 
-            if key== "q":
-                return "menu"
-            elif key =="r":
-                return show_surprise_screen()
-            elif key == "w":
-                storage.remove_from_watchlist(item["id"])
-                return "log", item["title"]
+    console.print()
+    console.print(Rule(style="dim red"))
+    console.print()
+    console.print(" [bold red][W][/bold red][dim] mark as watched now[/dim]")
+    console.print(" [bold red][R][/bold res][dim] pick another [/dim]")
+    console.print(" [bold red][Q][/bold red][dim] back to menu[/dim]")
+    console.print()
+    
+    while True:
+        key= readchar.readkey().lower()
+
+        if key== "q":
+            return "menu"
+        elif key =="r":
+            return show_surprise_screen()
+        elif key == "w":
+            storage.remove_from_watchlist(item["id"])
+            return "log", item["title"]
             
 def show_year_in_review():
     from collections import Counter
@@ -1078,7 +1122,7 @@ def show_year_in_review():
     all_tags = []
     for e in entries:
         all_tags.extend(e.get("tags", []))
-    top_tags = Counter(all_tags).most_common(3)\
+    top_tags = Counter(all_tags).most_common(3)
     
     rating_counts = Counter(e["rating"] for e in rated)
 
