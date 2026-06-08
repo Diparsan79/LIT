@@ -14,7 +14,8 @@ APP_STATE = {
     "running": True,
     "screen": "menu",
     "selected_entry": None,
-    "prefill_title": None
+    "prefill_title": None,
+    "page": 0
 }
 
 

@@ -43,6 +43,17 @@ def create_entry(title, director="", year=None, rating=None, review="", watched_
     ensure_data_dir()
     entries= load_entries()
 
+    if rating is not None:
+
+        try:
+            rating = float(rating)
+
+            if not (0 <= rating <= 10):
+                rating = None
+        
+        except(TypeError, ValueError):
+            rating = None
+
     new_entry= {
         "id": str(uuid.uuid4())[:8],
         "title": title.strip(),
@@ -52,7 +63,7 @@ def create_entry(title, director="", year=None, rating=None, review="", watched_
         "review": review.strip(),
         "watched_date": watched_date or date.today().isoformat(),
         "created_at": datetime.now().isoformat(),
-        "tags": tags or [],
+        "tags": [t.strip().lower() for t in (tags or []) if t.strip()],
         "poster_path": poster_path
     }
     entries.append(new_entry)
@@ -116,25 +127,38 @@ def save_watchlist(items):
 
     os.replace(tmp_file, WATCHLIST_FILE)
 
-def add_to_watchlist(title, director="", year = None, note = ""):
+def add_to_watchlist(title, director="", year=None, note=""):
 
     items = load_watchlist()
-    
+
+    normalized_title = title.strip().lower()
+
+    for item in items:
+        existing_title = item.get("title", "").strip().lower()
+
+        if existing_title == normalized_title:
+            return None
     new_item = {
         "id": str(uuid.uuid4())[:8],
         "title": title.strip(),
         "director": director.strip(),
         "year": year,
-        "note": note.strip(), 
+        "note": note.strip(),
         "added_date": date.today().isoformat()
     }
+
     items.append(new_item)
     save_watchlist(items)
+
     return new_item
 
 def get_watchlist():
     items = load_watchlist()
-    return sorted(items, key=lambda i: i["added_date"], reverse = True)
+
+    def safe_date(item):
+        return item.get("added_date") or ""
+    
+    return sorted(items, key=safe_date, reverse=True)
 
 def remove_from_watchlist(item_id):
     items = load_watchlist()
@@ -145,38 +169,45 @@ def remove_from_watchlist(item_id):
     save_watchlist(items)
     return True
 
-
-def search_entries(query= "", min_rating = None, max_rating = None, tag = None):
-    entries = get_all_entries()
+def search_entries(query="", min_rating=None, max_rating=None, tag=None):
+    entries=get_all_entries()
     results = []
 
     query = query.lower().strip()
-
+    
     for entry in entries:
+        title = entry.get("title", "").lower()
+        director = entry.get("director", "").lower()
+        tags = [t.lower() for t in entry.get("tags", [])]
+
         if query:
-            title = entry.get("title", "").lower()
-            director = entry.get("director", "").lower()
-            if query not in title and query not in director:
+            if query not in title and query not in director and query not in " ".join(tags):
                 continue
 
+        if tag:
+            if tag.strip().lower() not in tags:
+                continue
         rating = entry.get("rating")
 
+        try:
+            if rating is not None:
+                rating = float(rating)
+        except (TypeError, ValueError):
+            rating = None
+        
         if min_rating is not None:
             if rating is None or rating < min_rating:
                 continue
-
+        
         if max_rating is not None:
             if rating is None or rating > max_rating:
                 continue
-        
-        if tag is not None:
-            entry_tags = entry.get("tags", [])
-            if tag.strip().lower() not in entry_tags:
-                continue
-
         results.append(entry)
 
     return results
+
+
+
 
 def get_all_tags():
     from collections import Counter
@@ -248,8 +279,8 @@ def export_to_letterboxd_csv():
                 "Tags": tags,
                 "Review": entry.get("review", "")
             })
-
-    return str(filename)
+    console_message = str(filename.resolve())
+    return console_message
 
 def get_random_watchlist_item():
     import random
@@ -271,3 +302,8 @@ def get_available_years():
         if isinstance(d, str) and len(d) >= 4 and d[:4].isdigit():
             years.add(int(d[:4]))
     return sorted(years, reverse = True)
+
+def paginate(items, page, page_size =10):
+    start = page * page_size
+    end = start + page_size
+    return items[start:end]

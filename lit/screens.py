@@ -29,20 +29,26 @@ def prompt(label,optional=False):
     return value
 
 def prompt_rating():
-    while True:
-        console.print(" [bold red],[/bold red] Rating [dim](1-10, or skip[/dim]")
-        value=input("     ").strip()
 
-        if value == "": # if input is empty then js dont add thats it hah
+    while True:
+        value = input(
+            "Rating (0-10, blank to skip):"
+        ).strip()
+
+        if value =="":
             return None
         
-        if value.isdigit():
-            rating= int(value)
-            if 1<= rating <=10:
+        try:
+            rating = float(value)
+
+            if 0 <= rating <= 10:
                 return rating
-            
-        console.print(" [dim red] Please enter a number between 1 and 10, or press Enter or skip.[/dim red]")
-        console.print()
+        except ValueError:
+            pass
+
+        console.print(
+            "[red]Please enter a number between 0 and 10.[/red]"
+        )
 
 def prompt_year():
     while True:
@@ -279,44 +285,101 @@ def render_entry_row(index, entry):
 
 # diary screen
 def show_diary_screen():
-    clear_and_header("diary")
+
     entries = storage.get_all_entries()
 
     if not entries:
+        clear_and_header("diary")
+
         console.print()
-        console.print("  [dim]No films logged yet.[/dim]")
+        console.print(" [dim]No films logged yet.[/dim]")
         console.print()
-        console.print(" [dim] Press [/dim][bold red]L[/bold red][dim] from the menu to log your first film. [/dim]")
+        console.print(
+            " [dim]Press [/dim] [bold red]L[/bold red] [dim] from the menu to log your first film.[/dim]"
+        )
         console.print()
-        console.print(" [dim]press any key to go back[/dim]")
+        console.print(
+            " [dim]Press any key to go back[/dim]"
+        )
+
         readchar.readkey()
+
         return "menu", None
-    
-    console.print()
-    console.print(f" [dim] {len(entries)} film{'s' if len(entries) != 1 else ''} logged[/dim]")
-    console.print()
-
-    for i, entry in enumerate(entries, start=1):
-        row = render_entry_row(i,entry)
-        console.print(row)
-        console.print()
-
-    console.print(Rule(style="dim red"))
-    console.print(" [dim] press [/dim] [bold red]Q[/bold red][dim] to go back[/dim]")
-    console.print()
+    page = 0
+    page_size = 10
 
     while True:
-        choice = input("Select film id# or enter "+"q"+" to return to menu").strip()
+        clear_and_header("diary")
+
+        total_pages = (
+            len(entries) + page_size - 1
+        ) // page_size
+
+        start = page * page_size
+        end = start + page_size
+
+        visible_entries = entries[start:end]
+
+        console.print()
+        console.print(
+            f" [dim]{len(entries)} films logged[/dim]"
+        )
+
+        console.print(
+            f" [dim]Page {page + 1}/{total_pages}[/dim]"
+        )
+
+        console.print()
+        start_number = start + 1
+
+        for i, entry in enumerate(
+            visible_entries,
+            start=start_number
+        ):
+            row= render_entry_row(i, entry)
+            console.print(row)
+            console.print()
+
+        console.print(
+            Rule(style="dim red")
+        )
+
+        console.print(
+            " [bold red]N[/bold red] Next Page"
+        )
+
+        console.print(
+            " [bold red]P[/bold red] Previous Page"
+        )
+
+        console.print(
+            " [bold red]Q[/bold red] Back"
+        )
+        console.print()
+
+        choice = input(
+            "Select Film number, N/P, or Q: "
+        ).strip().lower()
 
         if choice =="q":
             return "menu", None
-        
-        if choice.isdigit():
+        elif choice =="n":
+            
+            if page < total_pages - 1:
+                page+=1
+        elif choice =="p":
+            
+            if page > 0:
+                page -= 1
+
+        elif choice.isdigit():
             index = int(choice)
             if 1 <= index <= len(entries):
-                entry = entries[index -1]
+
+                entry = entries[index - 1]
+
                 return "detail", entry
-            
+                     
 def show_detail_screen(entry):
     if not entry:
         return "menu"
@@ -603,8 +666,8 @@ def show_stats_screen():
 
 # some deets computing
     total = len(entries)
-    rated = [e for e in entries if e.get("rating") is not None]
-    avg_rating = round(sum(e["rating"] for e in rated)/ len(rated), 1) if rated else None
+    rated = [e["rating"] for e in entries if isinstance(e.get("rating"), (int, float))]
+    avg_rating = sum(rated) / len(rated) if rated else 0
 
     top_entry = max(rated, key=lambda e: e["rating"]) if rated else None
     low_entry = min(rated, key=lambda e: e["rating"]) if rated else None
@@ -811,30 +874,51 @@ def show_watchlist_screen():
 
                     return "log", item["title"]
                 
-
 def show_add_to_watchlist():
+    clear_and_header("Add to Watchlist")
 
-    clear_and_header("add to watchlist")
     console.print()
     console.print(" [dim]Add a film you want to watch.[/dim]")
     console.print()
 
-    while True:
-        title = prompt("Title")
-        director = prompt("Director", optional =True)
-        year = prompt_year()
-        note = prompt("Note", optional=True)
-        
-        storage.add_to_watchlist(
-            title,
-            director,
-            year,
-            note
+    title = prompt("Title")
+
+    director = prompt(
+        "Director",
+        optional = True
+    )
+
+    year = prompt_year()
+
+    note = prompt(
+        "Note",
+        optional=True
+    )
+
+    result = storage.add_to_watchlist(
+        title,
+        director,
+        year,
+        note
+    )
+
+    console.print()
+
+    if result:
+        console.print(
+            " [bold green]✓ Added to watchlist.[/bold green]"
         )
-        console.print("   [dim red] Title is required.[/dim red]")
-        console.print()
-        console.print("   [dim] press any key to continue[/dim]")
-        readchar.readkey()
+    else:
+        console.print(
+            " [bold yellow] ! Film already exists in watchlist.[/bold yellow]"
+        )
+    console.print()
+    console.print(
+        " [dim]Press any key to continue[/dim]"
+    )
+
+    readchar.readkey()
+    return "watchlist"
 
 
 def show_remove_from_watchlist(items):
