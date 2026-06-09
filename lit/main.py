@@ -51,11 +51,6 @@ def render_menu():
     
     return Align.center(menu)
 
-def render_footer():
-    footer =Text()
-    footer.append("\nv0.1.0 | local movie diary", style="dim white")
-    return footer
-
 def show_main_menu():
     console.clear()
 
@@ -64,7 +59,6 @@ def show_main_menu():
             Group(
                 render_header(),
                 render_menu(),
-                render_footer(),
             ),
             padding=(1, 4),
             border_style="dim white",
@@ -166,5 +160,5 @@ def main():
     console.clear()
     console.print("\n[dim red] goodbye ,  beloved cinephile. [/dim red]")
 
-if __name__ =="__main__":
+if __name__ == "__main__":
     main()

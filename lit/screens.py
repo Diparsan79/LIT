@@ -4,14 +4,24 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.align import Align
 from rich.rule import Rule
+from rich.theme import Theme
 from . import storage
 import readchar
 import os
 from . import tmdb
-from . import ascii_art
 
 
-console = Console()
+custom_theme = Theme({
+    "header": "bold white on #1e1e2e",
+    "dim": "dim #888888",
+    "prompt": "bold #ff79c6",
+    "info": "dim #6272a4",
+    "error": "bold red",
+})
+console = Console(theme=custom_theme)
+
+def rich_safe(text: str):
+    return text.replace("[", "(").replace("]",")")
 
 def clear_and_header(title_text):
     console.clear()
@@ -22,7 +32,7 @@ def clear_and_header(title_text):
     console.print()
 
 def prompt(label,optional=False):
-# its a input prompt lol
+# input prompt lol
     tag= " [dim](optional)[/dim]" if optional else ""
     console.print(f" [bold red],[/bold red] {label}{tag}")
     value=input("      ").strip()
@@ -87,7 +97,9 @@ def show_log_screen(prefill_title=None):
 #lets collect some data
     while True:
         if prefill_title:
-            console.print(f" [bold red]›[/bold red] Title[dim(pre-filled from watchlist)[/dim]")
+            console.print(
+                "[bold red]›[/bold red] Title [dim](pre-filled from watchlist if available)[/dim]"
+            )
             console.print(f"    [white]{prefill_title}[/white] ")
             console.print("    [dim] press enter to keep, or type to change[/dim]")
             override = input("   ").strip()
@@ -123,6 +135,10 @@ def show_log_screen(prefill_title=None):
                     f"[dim]{year}[/dim]"
                 )
             console.print()
+            director = ""
+            year = None
+            tags = []
+            poster_path = ""
             console.print(f" [bold red]0[/bold red] [dim]none of these - enter manually[/dim]")
             console.print()
             console.print(" [dim]pick a result:[/dim]")
@@ -149,8 +165,8 @@ def show_log_screen(prefill_title=None):
                             console.print(" [bold red]✓[/bold red] [dim]details fetched from TMDB[/dim]")
                             console.print()
                             console.print(f" [dim]Title [/dim][white]{title}[/white]")
-                            console.print(f" [dim]DIrector [/dim][white]{director}[/white]")
-                            console.print(f" [dim]Tags [/dim][white]{','.join(tags)}[/white]]")
+                            console.print(f" [dim]Director [/dim][white]{director}[/white]")
+                            console.print(f" [dim]Tags [/dim][white]{','.join(tags)}[/white]")
                             console.print()
                             console.print(" [dim]press Enter to continue --- or type to override any field[/dim]")
                             input()
@@ -235,13 +251,13 @@ def show_log_screen(prefill_title=None):
 
     return "menu"
 
-def render_stars(rating):
-
+def render_stars(rating: int | None) -> str:
+    """Return a visual star rating or placeholder if None."""
     if rating is None:
         return "[dim]------------[/dim]"
-    
+    rating = int(rating)
     filled = "*" * rating
-    empty = "O" * (10-rating)
+    empty = "o" * (10 - rating)
     return f"[yellow]{filled}[/yellow][dim]{empty}[/dim]"
 
 def format_date(iso_date_string):
@@ -260,10 +276,15 @@ def render_entry_row(index, entry):
     title = entry.get("title", "unknown")
     row.append(f"{title:<38}", style="bold white")
 
-    rating = entry.get("rating")
+    raw_rating = entry.get("rating")
+    try:
+        rating = int(float(raw_rating)) if raw_rating is not None else 0
+    except (ValueError, TypeError):
+        rating = 0
+
     if rating:
-        filled = "*" * rating
-        empty = "O" * (10 - rating)
+        filled = "*" * (rating)
+        empty = "o" * (10 - rating)
         row.append(filled, style = "yellow")
         row.append(empty, style="dim white")
     else:
@@ -275,7 +296,7 @@ def render_entry_row(index, entry):
     director = entry.get("director", "")
     year = entry.get("year")
 
-    meta_parts = [p for p in [director , str(year) if year else ""]if p]
+    meta_parts = [p for p in [director, str(year) if year else ""] if p]
     meta = "  ·  ".join(meta_parts) if meta_parts else ""
 
     if meta:
@@ -388,21 +409,7 @@ def show_detail_screen(entry):
     poster_path = entry.get("poster_path", "")
 
     if poster_path:
-        console.print()
-        console.print(" [dim]fetching poster...[/dim]", end="\r")
-
-        rows = ascii_art.poster_url_to_ascii(poster_path, width=55)
-
-        if rows:
-            console.print(" " * 30, end="\r")
-
-
-            for row in rows:
-                console.print(f" [dim]{row}[/dim]")
-            
-            console.print()
-        else:
-            console.print(" " * 30, end="\r")
+        console.print("Poster unavailable", style="dim")
 
     title_text = Text()
     title_text.append(entry.get("title", "Unknown"), style="bold white")
@@ -411,10 +418,10 @@ def show_detail_screen(entry):
 
     director = entry.get("director", "")
     year = entry.get("year")
-    meta_parts = [p for p in [director, str(year), str(year) if year else ""]if p]
-    meta = "  ·  ".join(meta_parts) if meta_parts else ""
+    meta_parts = [p for p in [director, str(year) if year else ""]if p]
+    meta = " · ".join(meta_parts) if meta_parts else ""
     if meta:
-        console.print(f" [dim] {meta}[/dim]")
+        console.print(f" [dim]{meta}[/dim]")
 
     console.print()
 
@@ -452,7 +459,7 @@ def show_detail_screen(entry):
             if diff > 0:
                 arc = f"[green]+ {diff} since first watch[/green]"
             elif diff < 0:
-                arc = f"[red]{diff} since first watch[/dim]"
+                arc = f"[red]{diff} since first watch[/red]"
             else:
                 arc = "[dim]No rating change[/dim]"
 
@@ -462,10 +469,15 @@ def show_detail_screen(entry):
         console.print()
         console.print(Rule(style="dim red"))
 
-    rating = entry.get("rating")
+    raw_rating = entry.get("rating")
+    try:
+        rating = int(float(raw_rating)) if raw_rating is not None else 0
+    except (ValueError, TypeError):
+        rating = 0
+
     if rating:
         filled = "*" * rating
-        empty = "O" * (10 - rating)
+        empty = "o" * (10 - rating)
         console.print(f" [yellow] {filled}[/yellow][dim white] {empty}[/dim white] [dim] {rating}/10[/dim]")
     else:
         console.print(" [dim]no rating[/dim]")
@@ -599,7 +611,7 @@ def show_edit_screen(entry):
     
     new_review = edit_prompt("Review", entry.get("review", ""))
 
-    current_tags = ",".join(entry.get("tags", []))
+    current_tags = ",".join(str(t) for t in entry.get("tags", []))
     console.print(f" [bold red]›[/bold red] Tags [dim](comma separated)[/dim]")
     tags_raw = input("  new: ").strip()
     console.print()
@@ -666,11 +678,11 @@ def show_stats_screen():
 
 # some deets computing
     total = len(entries)
-    rated = [e["rating"] for e in entries if isinstance(e.get("rating"), (int, float))]
-    avg_rating = sum(rated) / len(rated) if rated else 0
+    rated_entries = [e for e in entries if isinstance(e.get("rating"), (int, float))]
+    avg_rating = sum(e["rating"] for e in rated_entries) / len(rated_entries) if rated_entries else 0
 
-    top_entry = max(rated, key=lambda e: e["rating"]) if rated else None
-    low_entry = min(rated, key=lambda e: e["rating"]) if rated else None
+    top_entry = max(rated_entries, key=lambda e: e["rating"]) if rated_entries else None
+    low_entry = min(rated_entries, key=lambda e: e["rating"]) if rated_entries else None
 
     directors = [e["director"] for e in entries if e.get("director", "").strip()]
     fav_director = Counter(directors).most_common(1)[0] if directors else None
@@ -696,7 +708,7 @@ def show_stats_screen():
     )
     rewatched = [(t,c) for t,c in title_counts.most_common() if c > 1]
 
-    rating_counts = Counter(e["rating"] for e in rated)
+    rating_counts = Counter(e["rating"] for e in rated_entries)
 
 
     console.print()
@@ -958,7 +970,7 @@ def show_search_screen():
 
 
     min_rating = None
-    console.print(" [bold red] ›[/bold red] Minimum rating [dim](1-10, or press Enter to skip)[/dim]")
+    console.print(" [bold red]›[/bold red] Minimum rating [dim](1-10, or press Enter to skip)[/dim]")
     min_raw = input("    ").strip()
     console.print()
     if min_raw.isdigit() and 1 <= int(min_raw) <= 10:
@@ -1006,7 +1018,7 @@ def show_search_screen():
     console.print(Rule(style="dim red"))
     console.print()
     console.print( " [bold red][1-9][/bold red][dim] open entry[/dim]")
-    console.print("  [bold red][/][/bold red][dim] search again[/dim]")
+    console.print(f"  [bold red]\\[/][/bold red][dim] search again[/dim]")
     console.print("  [bold red][Q][/bold red][dim] back to menu[/dim]")
     console.print()
 
@@ -1096,7 +1108,7 @@ def show_export_screen():
         console.print(" [bold red]✓[/bold red] [white]Export complete.[/white]")
         console.print()
         console.print(f" [dim]saved to:[/dim]")
-        console.print("f[white]{filepath}[/white]")
+        console.print(f" [white]{filepath}[/white]")
         console.print()
         console.print(f" [dim]Upload this file at:[/dim]")
         console.print(f"[white]Letterboxd.com/import[/white]")
@@ -1120,7 +1132,7 @@ def show_surprise_screen():
     if not item:
         console.print(" [dim]Your watchlist is empty.[/dim]")
         console.print()
-        console.print(" [dim]Add films to your watchlist first - press [/dim][bold red]W[/bold red][fim]from the menu.[/dim]")
+        console.print(" [dim]Add films to your watchlist first - press [/dim][bold red]W[/bold red][dim] from the menu.[/dim]")
         console.print()
         console.print()
         return "menu"
@@ -1142,7 +1154,7 @@ def show_surprise_screen():
     console.print(Rule(style="dim red"))
     console.print()
     console.print(" [bold red][W][/bold red][dim] mark as watched now[/dim]")
-    console.print(" [bold red][R][/bold res][dim] pick another [/dim]")
+    console.print(" [bold red][R][/bold red][dim] pick another [/dim]")
     console.print(" [bold red][Q][/bold red][dim] back to menu[/dim]")
     console.print()
     
@@ -1221,7 +1233,7 @@ def show_year_in_review():
     console.print()
 
     if avg_rating:
-        console.print(f" [bold red]›[/bold red] [white]Agerage rating[/white] [yellow]{avg_rating}[/yellow]/ 10")
+        console.print(f" [bold red]›[/bold red] [white]Average rating[/white] [yellow]{avg_rating}[/yellow]/ 10")
         console.print()
     
     if top_entry:
@@ -1249,8 +1261,13 @@ def show_year_in_review():
     top_5 = sorted(rated, key=lambda e: e["rating"], reverse =True)[:5]
 
     for i, entry in enumerate(top_5,start=1):
-        filled = "*" * entry["rating"]
-        empty = "o" * (10-entry["rating"])
+        try:
+            rating_val = int(float(entry.get("rating", 0)))
+        except (ValueError, TypeError):
+            rating_val = 0
+            
+        filled = "*" * rating_val
+        empty = "o" * (10 - rating_val)
         console.print(
             f" [bold red]{i}[/bold red] "
             f"[white]{entry['title']:<35}[/white] "
@@ -1271,9 +1288,9 @@ def show_year_in_review():
             filled = "█" * bar_length
             empty = "░" * (20 - bar_length)
             if count > 0:
-                console.print(f" [dim]{star:>2}[/dim] [yellow]{filled}[/yellow][dim] {empty} {count} [/dim]")
+                console.print(f" [dim]{star:>2}[/dim] [yellow]{filled}[/yellow][dim]{empty} {count:>2}[/dim]")
             else:
-                console.print(f" [dim]{star:>2} {filled}{empty} {count}[/dim]")
+                console.print(f" [dim]{star:>2}[/dim] [dim]{filled}{empty} {count:>2}[/dim]")
             
         console.print()
 

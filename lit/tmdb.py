@@ -48,11 +48,15 @@ def get_film_details(tmdb_id):
             if member.get("job") =="Director":
                 director = member.get("name", "")
                 break
-        genres = [g["name"].lower() for g in data.get("genres", [])]
+        genres = [g["name"].lower() for g in data.get("genres", []) if "name" in g]
+
+        release_date = str(data.get("release_date", ""))
+        year_str = release_date[:4]
+        year = int(year_str) if year_str.isdigit() else None
 
         return {
             "title": data.get("title", ""),
-            "year": int(data["release_date"][:4]) if data.get("release_date") else None,
+            "year": year,
             "director": director,
             "tags": genres,
             "poster_path": data.get("poster_path", "")

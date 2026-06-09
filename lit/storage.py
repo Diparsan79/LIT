@@ -24,7 +24,7 @@ def load_entries():
         if not content:
             return []
         return json.loads(content)
-    except json.JSONDecodeError:
+    except Exception:
         return []
 
     
@@ -54,17 +54,20 @@ def create_entry(title, director="", year=None, rating=None, review="", watched_
         except(TypeError, ValueError):
             rating = None
 
+    if isinstance(tags, str):
+        tags = [tags]
+
     new_entry= {
         "id": str(uuid.uuid4())[:8],
-        "title": title.strip(),
-        "director": director.strip(),
+        "title": str(title).strip(),
+        "director": str(director).strip() if director else "",
         "year": year,
         "rating": rating,
-        "review": review.strip(),
-        "watched_date": watched_date or date.today().isoformat(),
+        "review": str(review).strip() if review else "",
+        "watched_date": str(watched_date) if watched_date else date.today().isoformat(),
         "created_at": datetime.now().isoformat(),
-        "tags": [t.strip().lower() for t in (tags or []) if t.strip()],
-        "poster_path": poster_path
+        "tags": [str(t).strip().lower() for t in (tags or []) if str(t).strip()],
+        "poster_path": str(poster_path) if poster_path else ""
     }
     entries.append(new_entry)
     save_entries(entries)
@@ -73,7 +76,7 @@ def create_entry(title, director="", year=None, rating=None, review="", watched_
 
 def get_all_entries():
     entries= load_entries()
-    return sorted(entries, key=lambda e: e["watched_date"], reverse=True)
+    return sorted(entries, key=lambda e: str(e.get("watched_date", "")), reverse=True)
 
 def get_entry_by_id(entry_id):
     entries= load_entries()
@@ -110,11 +113,11 @@ def load_watchlist():
     if not WATCHLIST_FILE.exists():
         return []
     try:
-        content = WATCHLIST_FILE.read_text(encoding="utf=8").strip()
+        content = WATCHLIST_FILE.read_text(encoding="utf-8").strip()
         if not content:
             return []
         return json.loads(content)
-    except json.JSONDecodeError:
+    except Exception:
         return []
 
 def save_watchlist(items):
@@ -122,7 +125,7 @@ def save_watchlist(items):
     tmp_file = WATCHLIST_FILE.with_suffix(".tmp")
 
     with open(tmp_file, "w", encoding="utf-8") as f:
-        json.dump(items, f, indent=2, ensure_ascii = False)
+        json.dump(items, f, indent=2, ensure_ascii=False)
 
 
     os.replace(tmp_file, WATCHLIST_FILE)
@@ -261,7 +264,7 @@ def export_to_letterboxd_csv():
 
         writer.writeheader()
 
-        chronological = sorted(entries, key = lambda e: e["watched_date"])
+        chronological = sorted(entries, key = lambda e: str(e.get("watched_date", "")))
 
         for entry in chronological:
             title = entry.get("title", "")
