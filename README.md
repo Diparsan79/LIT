@@ -1,53 +1,117 @@
 # LIT — Letterboxd in Terminal
 
-A retro-inspired, local-first movie logging app for the terminal.
+> A retro-inspired, local movie logging app for the terminal.
 
-## Setup
+```
+    L I T
+    Letterboxd in Terminal
+
+    [L] log a film
+    [D] diary
+    [W] watchlist
+    [S] search
+    [T] stats
+    [E] export
+    [X] surprise me
+    [Y] Year in review
+    [Q] quit
+```
+
+---
+
+# What is LIT?
+LIT is a personal movie logging app that lives entirely in your terminal. Its almost exactly like Letterboxd (well in some ways) if you exclude the multi users and the internet thing. 
+
+
+ I wanted to combine my love for movies and my thirst for becoming a better programmer so I decided to start this project. This whole journey turned out to be a complete roller coaster of emotions. I am soooo happy that finally the project ended but now i won't have any other project to maintain my streak for :(
+
+---
+
+#Features
+**Logging**
+- Log films with title, director, year, rating, review , and tags
+- Auto-fill metadata from TMDB with a single keypress (makes the whole process SOOOOOOO COOOLLLLL)
+- Rewatch detection - see your previous ratings when logging the same movie again aswell
+
+
+**Diary**
+- chronological list of everything you watched
+- detailed well formatted data
+- entry detail well shown like review , tags , watch history with edit or delete any entry feature
+
+
+**Watchlist**
+- separate list of films you want/have to watch
+- add specific notes to each movies like " recommended by Tyler (durden) "
+-  mark as watched -> goes to log screen and fetches data from tmdb -> select the one you chose so as to fix the spelling errors and directors
+- easy and effifient
+
+**Search @ Filter**
+- Search by Title or Director
+- Filter using minimum rating , tags , combine all filters (all are optional)
+
+**Stats**
+- Total films, average rating, top director
+- Rating distribution bar chart
+- Tag cloud weighted by frequency
+
+**Export**
+- Export to Letterboxd's official CSV import format
+- Upload directly at `letterboxd.com/import`
+- easy and convenient movie logging feature
+
+**Surprise Me
+- Press `X` -> LIT picks a random film from your watchlist
+- Press `R` to pick another random film , `W` to mark it as watched that day , you get into the logging section
+
+**Requirements:** Python 3.10+
 
 ```bash
+# Clone the Project
+git clone `https://github.com/Diparsan79/LIT`
+cd LIT
+
+# Create and activate virtual environment in mac/linux
 python3 -m venv .venv
 source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Run
+** setting up TMDB api**
+1. Create a free account at [themoviedb.org] (https://themoviedb.org/signup)
+2. Go to sSettings -> API -> Request an API key
+3. Create a `.env` file in the project root:
 
-```bash
-python lit/main.py
+```
+TMDB_API=your_key_here
 ```
 
-may 30th
-im proposing some features that have been added till now and some that im planning to add very soon
-- log , diary , edit , detailed view and some idk how to name lmaoo
-
-#features i wanna add soon
-- stats , watchlist , search and filter and add basic functionalities as well
-THE NO 1 thing i wanna do is make it more better like idk how but make it look more intuitive to use and smooth.
-well i have some ideas of making this similar thing but in a similar platform but idk whom to ask if i can do that in this project itself or do i have to make a new one and do in that. well ADIOSS
+ps: LIT works fully without a TMDB api but it is recommended for easy logging of proper info of movies also for letterboxd exporting so as to avoid errors
 
 
-2 June 
-the project's been going kinda good but i think i should've left more commits as im mostly forgetting the codebase and this is lowk hard for me to keep track of as i've never worked on such a hard project before.
-i plan to add some features like exporting data that is ready to be pasted into letterboxd's upload movie logs section. I think this is the best feature ive planned as of now.
+## Run
+``` bash
+python -m lit.main
+```
 
-this project should be done in less than a week if i don't get distracted by other projects. i think im on well track to finish this project with like 1000 gold.
+---
+**File structure**
+lit/
+├── lit/
+│   ├── main.py      
+│   ├── screens.py  
+│   ├── storage.py    
+│   ├── tmdb.py       
+│   └── ascii_art.py  
+├── data/
+│   ├── entries.json   
+│   └── watchlist.json 
+├── exports/          
+├── .env              
+└── requirements.txt
 
-4 june
-just added the surprise me functionality and also completed the exporting functionality
+All your data lives in `data/`. It's plain JSON . Open it in any text editor. Back it up anywhere.
 
-> surprise me 
-- it means it pulls a random movie off of your watchlist and you have to watch it. THATS THE RULEEE
 
-> export
-- this feature exports all your logged movies and all the data required and converts them into a csv file , which you can directly upload into letterboxd for logging movies
-
-insights:
-i think this project has been the besttt fuel for my learning recently and also for my 720Ns  hehee.
-adiosssss
-
-js me getting a new git commit for the brand new day
-hehe
-
-# june 6
-added the year in review feature
-all the features i had been planning for this project has finally been incorporated . Now im running out of feature ideas for this project. idk what im going to do but lets see what happens ig . 
