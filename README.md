@@ -115,3 +115,5 @@ lit/
 All your data lives in `data/`. It's plain JSON . Open it in any text editor. Back it up anywhere.
 
 
+## ai clarification
+This project is an original creation of mine and undoubtedly my biggest project yet. I've had a lot of debugging errors for which i used gemini to fix my errors and used claude for some features ideas generation. the two features that claude suggested me was of the surprise me feature and the Year in Review but i implemented all of that myself.
