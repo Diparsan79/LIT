@@ -6,3 +6,15 @@ __pycache__/
 .env
 dist/
 lit_movie_diary.egg-info/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+.venv/
+.venv/
+.git/
+__pycache__/
+.DS_Store
+.env
+demo.mp4
