@@ -64,6 +64,11 @@ LIT is a personal movie logging app that lives entirely in your terminal. Its al
 - Press `X` -> LIT picks a random film from your watchlist
 - Press `R` to pick another random film , `W` to mark it as watched that day , you get into the logging section
 
+
+### DEMO
+You can check out the demo of my project from here
+![Project Demo Video](demo.mp4)
+
 **Requirements:** Python 3.10+
 
 ```bash

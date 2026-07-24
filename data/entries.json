@@ -1,1 +1,49 @@
-[]
+[
+  {
+    "id": "5d377691",
+    "title": "The Shawshank Redemption",
+    "director": "Frank Darabont",
+    "year": 1994,
+    "rating": 9.9,
+    "review": "This was truly a masterpiece which needs to be appreciated more so as to understand the cinema more",
+    "watched_date": "2026-07-24",
+    "created_at": "2026-07-24T12:49:39.863301",
+    "tags": [
+      "drama",
+      "crime"
+    ],
+    "poster_path": "/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg"
+  },
+  {
+    "id": "66835d0b",
+    "title": "The Hangover",
+    "director": "Todd Phillips",
+    "year": 2009,
+    "rating": 10.0,
+    "review": "BESTT COMEDYYYYYYYYYYYYYYYYYYY",
+    "watched_date": "2026-07-24",
+    "created_at": "2026-07-24T12:51:02.892208",
+    "tags": [
+      "comedy"
+    ],
+    "poster_path": "/A0uS9rHR56FeBtpjVki16M5xxSW.jpg"
+  },
+  {
+    "id": "714b968a",
+    "title": "The Hobbit",
+    "director": "Arthur Rankin, Jr.",
+    "year": 1977,
+    "rating": 8.0,
+    "review": "It was okayish , i watched it with my dad for his sake but i enjoyed some scenes",
+    "watched_date": "2026-07-24",
+    "created_at": "2026-07-24T12:58:54.185946",
+    "tags": [
+      "family",
+      "fantasy",
+      "animation",
+      "adventure",
+      "tv movie"
+    ],
+    "poster_path": "/2ohvyMPhvjftLrM6S6Ljr6QrL0u.jpg"
+  }
+]

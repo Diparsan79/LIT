@@ -206,14 +206,27 @@ def show_log_screen(prefill_title=None):
     console.print()
     console.print(Rule(style="dim red"))
     console.print()
+    previous_watches = storage.get_all_entries_by_title(title)
+    if previous_watches:
+        count = len(previous_watches)
+        console.print()
+        console.print(f"  [bold red]![/bold red] [white]You've logged this film {count} time{'s' if count != 1 else ''} before.[/white]")
+        console.print()
+
+        for i, prev in enumerate(previous_watches, start = 1):
+            rating_str = f"{prev['rating']}/10" if prev.get('rating') else "unrated"
+            date_str = format_date(prev.get("watched_date", ""))
+            console.print(f"    [dim]watch {i}   ·  {date_str}   ·  {rating_str}[/dim]")
+
+        console.print()
+        console.print("  [dim]Logging as a new watch. Your previous entries are kept.[/dim]")
+        console.print()
 
 # save the entry or cancel
     console.print(" [bold red]›[/bold red] Save? [dim](y/n)[/dim]")
     confirm= input("    ").strip().lower()
 
     if confirm =="y":
-
-        previous_watches = storage.get_all_entries_by_title(title)
         entry = storage.create_entry(
             title=title,
             director=director,
@@ -234,20 +247,6 @@ def show_log_screen(prefill_title=None):
         console.print()
         console.print(" [dim]press Enter to return to menu[/dim]")
         readchar.readkey()
-    if previous_watches:
-        count = len(previous_watches)
-        console.print()
-        console.print(f"  [bold red]![/bold red] [white]You've logged this film {count} time{'s' if count != 1 else ''} before.[/white]")
-        console.print()
-
-        for i, prev in enumerate(previous_watches, start = 1):
-            rating_str = f"{prev['rating']}/10" if prev.get('rating') else "unrated"
-            date_str = format_date(prev.get("watched_date", ""))
-            console.print(f"    [dim]watch {i}   ·  {date_str}   ·  {rating_str}[/dim]")
-
-        console.print()
-        console.print("  [dim]Logging as a new watch. Your previous entries are kept.[/dim]")
-        console.print()
 
     return "menu"
 
