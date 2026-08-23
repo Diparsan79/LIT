@@ -73,7 +73,7 @@ You can check out the demo of my project from here
 
 ```bash
 # Clone the Project
-git clone `https://github.com/Diparsan79/LIT`
+git clone https://github.com/Diparsan79/LIT
 cd LIT
 
 # Create and activate virtual environment in mac/linux
