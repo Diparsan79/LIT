@@ -85,7 +85,7 @@ pip install -r requirements.txt
 ```
 
 ** setting up TMDB api**
-1. Create a free account at [themoviedb.org] (https://themoviedb.org/signup)
+1. Create a free account at [www.themoviedb.org] (https://www.themoviedb.org/signup)
 2. Go to sSettings -> API -> Request an API key
 3. Create a `.env` file in the project root:
 
